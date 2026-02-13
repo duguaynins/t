@@ -8,6 +8,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head translate="yes">
@@ -98,13 +99,11 @@
 
 <div id="content" style="background: #CCCCCC; overflow:auto; width:100%; flex:1; border: 1px solid #ccc; color: black;">
     <!--p>Subscribe to the channel to follow more apps.</p!-->
-    <p>It’s a small step for you to subscribe, but a big step for us to continue.</p>
-    <a href="https://youtube.com/@duguaynins/community"
-        translate="no"
+    <p>It’s a small step for you to subscribe.</p>
+    <p><b translate="no">🔔 <a href="https://youtube.com/@duguaynins/community"        
         target="_blank"
-        rel="noopener noreferrer">
-        YouTube
-    </a>
+        rel="noopener noreferrer">youtube.com/@duguaynins</a> 🔔</b></p>
+    </p>but a big step for us to continue.</p>
 </div>
 
 <div id="url-slider" style="
@@ -131,6 +130,18 @@
         white-space: nowrap;
         ">
         ❤️
+    </a>
+    <a href="https://youtube.com/@duguaynins/community" target="_blank" rel="noopener noreferrer" class="use main day"
+        style="
+        flex: 0 0 auto;
+        padding: 8px 12px;
+        border: 1px solid #000;
+        border-radius: 999px;
+        text-decoration: none;
+        cursor: pointer;
+        white-space: nowrap;
+        ">
+        🔔
     </a>
 </div>
 <div class="input-btn-wrapper" style="display: flex; align-items: stretch; width:100%; text-align: center;">
@@ -250,6 +261,7 @@ document.getElementById('input_msg').addEventListener('keydown', function(event)
 window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     document.getElementById('input_msg').value = params.get("data");
+    ///if (params.get("data")) { setTimeout(() => { send(); }, 3000); }
 });
 </script>
 
