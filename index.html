@@ -148,7 +148,7 @@
 <div class="input-btn-wrapper" style="display: flex; align-items: stretch; width:100%; text-align: center;">
   <!--button type="button" class="main " translate="no" onclick="document.getElementById('input_msg').value='https://';">❤️📄📚📜💡<p style="margin: 0; padding: 0; font-size: 1vh;" class="label">https://</p></button!-->
   <button type="button" class="main use fat" translate="no" onclick="send()">🚀<p translate="no" style="margin: 0; padding: 0; font-size: 1vh;" class="label">enter</p></button>
-  <input id="input_msg" class="main use fat" type="text" name="url" autocomplete="off" placeholder="After entering the URL, please press Enter!" style="flex: 1;" list="list_msg"/>
+  <input id="input_msg" class="main use fat" type="text" name="url" autocomplete="off" placeholder="please press Send!" style="flex: 1;" list="list_msg"/>
   <datalist id="list_msg">
   </datalist>
   <button type="button" class="main use fat" translate="no" onclick="send()">🚀<p translate="no" style="margin: 0; padding: 0; font-size: 1vh;" class="label">enter</p></button>
@@ -253,8 +253,8 @@ function send(){
     const url = `${baseUrl}?sl=${sl}&tl=${tl}&q=${encodeURIComponent(text)}`;
 
     // 開新視窗
-    ///window.open(url, "_blank", "noopener,noreferrer");
-    window.location.replace(url);
+    window.open(url, "_blank", "noopener,noreferrer");
+    ///window.location.replace(url);
 }
 
 document.getElementById('input_msg').addEventListener('keydown', function(event) {  // 檢查是否按下 Enter 鍵
@@ -263,7 +263,7 @@ document.getElementById('input_msg').addEventListener('keydown', function(event)
 window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     document.getElementById('input_msg').value = params.get("data");
-    if (params.get("data")) { setTimeout(() => { send(); }, 5800); }
+    ///if (params.get("data")) { setTimeout(() => { send(); }, 5800); }
 });
 </script>
 
@@ -274,6 +274,7 @@ window.addEventListener('DOMContentLoaded', () => {
     
 </body>
 </html>
+
 
 
 
