@@ -392,7 +392,7 @@ function send(){
         navigator.share({
             title: 't.nins.cc',
             text: document.getElementById("input_msg").value,
-            url: window.location.href, })
+            url: nins, })
             .then(() => { document.getElementById("content").innerHTML = "Share!"; } )
             .catch(err => { document.getElementById("content").innerHTML = "Reshare?"; } );
     }
@@ -408,6 +408,11 @@ function send(){
             .catch(err => document.getElementById("content").innerHTML = "Resend." );
         ///return;
     }  */
+
+    if (params.get("data")===document.getElementById('input_msg').value) {  }
+    else {
+        window.open( nins, '_blank', 'noopener,noreferrer' );
+    }
 
     // 連棟按鈕
     ///document.getElementById('TTS').click();  // 這不可能達成
@@ -486,7 +491,7 @@ document.getElementById('google_translate_element').addEventListener('change', (
         navigator.share({
             title: 't.nins.cc',
             text: document.getElementById("input_msg").value,
-            url: window.location.href, })
+            url: nins, })
             .then(() => { document.getElementById("content").innerHTML = "Share!"; } )
             .catch(err => { document.getElementById("content").innerHTML = "Reshare?"; } );
     }
