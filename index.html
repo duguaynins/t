@@ -260,10 +260,15 @@ function send(){
     ///await navigator.clipboard.writeText(nins);
     ///navigator.clipboard.writeText(nins);
     
-    if (params.get("data")) return;
-    navigator.clipboard.writeText(nins)
-    .then(() => window.open(url, "_blank", "noopener,noreferrer") )
-    .catch(err => document.getElementById("content").innerHTML = "Resend." );
+    if (params.get("data")) {  // 只需要跳轉
+        window.open(url, "_blank", "noopener,noreferrer");
+        return;
+    }
+    else {  // 需要複製和跳轉
+        navigator.clipboard.writeText(nins)
+            .then(() => window.open(url, "_blank", "noopener,noreferrer") )
+            .catch(err => document.getElementById("content").innerHTML = "Resend." );
+    }
 
     // 開新視窗
     ///window.open(url, "_blank", "noopener,noreferrer");
