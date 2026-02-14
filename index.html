@@ -399,28 +399,17 @@ function send(){
             .catch(err => { document.getElementById("content").innerHTML = "Reshare?"; } );  */
     }
 
-    /*
-    if (params.get("data")) {  // 只需要跳轉
-        ///window.open(url, "_blank", "noopener,noreferrer");
-        ///return;
-    }
-    else {  // 需要複製和跳轉
-        navigator.clipboard.writeText(nins)
-            ///.then(() => window.open(url, "_blank", "noopener,noreferrer") )
-            .catch(err => document.getElementById("content").innerHTML = "Resend." );
-        ///return;
-    }  */
-
-    /*  // 複製文字自行跳轉***
-    if (params.get("data")===document.getElementById('input_msg').value) {  }
-    else {
-        window.open( nins, '_blank', 'noopener,noreferrer' );
-    }  */
-
     // 連棟按鈕
     ///document.getElementById('TTS').click();  // 這不可能達成
     document.getElementById('DialogTrans').showModal();
     document.getElementById('DialogTrans').style.opacity = 1.0;
+    return;
+
+    // 跳轉測試
+    if (params.get("data")===document.getElementById('input_msg').value) {  }
+    else {
+        window.open( nins, '_blank', 'noopener,noreferrer' );
+    }
 
     ///window.open( tts, '_blank', 'noopener,noreferrer' );
     setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);  //****
