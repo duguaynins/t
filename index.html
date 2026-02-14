@@ -405,7 +405,9 @@ function send(){
     document.getElementById('DialogTrans').style.opacity = 1.0;
 
     if (params.get("data")) {
-        window.open( tts, '_blank', 'noopener,noreferrer' );  // 為了推行網址被記憶
+        ///window.open( tts, '_blank', 'noopener,noreferrer' );  // 為了推行網址被記憶
+        window.open( url, '_blank', 'noopener,noreferrer' );  // 為了推行網址被記憶
+        window.open( urlm, '_blank', 'noopener,noreferrer' );  // 為了推行網址被記憶
     }
     
     return;  // 暫時阻止跳轉
