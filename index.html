@@ -214,7 +214,7 @@ const strs = [
   "안녕하세요",
   "สวัสดี",
   "Bonjour",
-  "Guten Morgen",
+  ///"Guten Morgen",
 ];
 
 const container = document.getElementById('url-slider');
@@ -239,22 +239,45 @@ strs.forEach(url => {
   container.appendChild(btn);
 });
 
-container.insertAdjacentHTML('beforeend', `
-    <button class="use main day"
-        onclick="window.open('https://safebrowsing.google.com/safebrowsing/report_phish/', '_blank', 'noopener,noreferrer')"
-        style="
-        margin-left: auto;
-        flex: 0 0 auto;
-        padding: 8px 12px;
-        border: 1px solid #000;
-        border-radius: 999px;
-        text-decoration: none;
-        cursor: pointer;
-        white-space: nowrap;
-        ">
-        🎯
-    </button>
-`);
+function btns(){
+    ///const params = new URLSearchParams(window.location.search);
+    ///const [url, tts, nins] = urls();
+    const voice = "en";
+    const encode = "duguaynins";
+    
+    container.insertAdjacentHTML('beforeend', `
+        <button class="use main day" id="TTS"
+            onclick="window.open('https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${voice}&q=${encode}', '_blank', 'noopener,noreferrer')"
+            style="
+            flex: 0 0 auto;
+            padding: 8px 12px;
+            border: 1px solid #000;
+            border-radius: 999px;
+            text-decoration: none;
+            cursor: pointer;
+            white-space: nowrap;
+            ">
+            💬
+        </button>
+    `);
+    container.insertAdjacentHTML('beforeend', `
+        <button class="use main day"
+            onclick="window.open('https://safebrowsing.google.com/safebrowsing/report_phish/', '_blank', 'noopener,noreferrer')"
+            style="
+            margin-left: auto;
+            flex: 0 0 auto;
+            padding: 8px 12px;
+            border: 1px solid #000;
+            border-radius: 999px;
+            text-decoration: none;
+            cursor: pointer;
+            white-space: nowrap;
+            ">
+            🎯
+        </button>
+    `);
+}
+btns();
 </script>
 <script>
 
@@ -293,17 +316,19 @@ function urls(){
 
     // URL 編碼文字
     const encode = encodeURIComponent(text);
-    const url = `${baseUrl}?sl=${sl}&tl=${tl}&q=${encode}`;
+    ///const url = `${baseUrl}?sl=${sl}&tl=${tl}&q=${encode}`;
+    const url = `https://translate.google.com/?sl=${sl}&tl=${tl}&q=${encode}`;
     const tts = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${voice}&q=${encode}`;
     const nins = `https://t.nins.cc/?data=${encode}&voice=${voice}`;
+    const urlm = `https://translate.google.com/m?sl=${sl}&tl=${tl}&q=${encode}`;
     console.log(voice);
 
-    return [url, tts, nins];
+    return [url, tts, nins, urlm];
 }
 function send(){
     // 預設使用桌面版
     const params = new URLSearchParams(window.location.search);
-    const [url, tts, nins] = urls();
+    const [url, tts, nins, urlm] = urls();
 
     // 生成按鈕
     ///await navigator.clipboard.writeText(nins);
@@ -311,10 +336,10 @@ function send(){
     if (true) {
         const btn1 = document.getElementById("T1");
         if (btn1) {
-            ///btn.textContent = "▶️";
+            ///btn.textContent = "▶️";  ///💡
             btn1.style.display = "block";
             btn1.onclick = () => {
-                window.open( tts, '_blank', 'noopener,noreferrer' );
+                window.open( url, '_blank', 'noopener,noreferrer' );
                 ///const audio = new Audio(tts);
                 ///audio.play();
                 ///return;
@@ -322,19 +347,44 @@ function send(){
         }
         const btn2 = document.getElementById("T2");
         if (btn2) {
-            ///btn.textContent = "▶️";
+            ///btn.textContent = "▶️";  ///👀
             btn2.style.display = "block";
             btn2.onclick = () => {
-                window.open( url, '_blank', 'noopener,noreferrer' );
+                window.open( urlm, '_blank', 'noopener,noreferrer' );
                 ///const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${voice}&q=${encode}`);
                 ///audio.play();
                 ///return;
                 
             };
         }
+        const btn3 = document.getElementById("TTS");
+        if (btn3) {
+            ///btn.textContent = "▶️";
+            btn3.style.display = "block";
+            btn3.onclick = () => {
+                window.open( tts, '_blank', 'noopener,noreferrer' );
+                ///const audio = new Audio(tts);
+                ///audio.play();
+                ///return;
+            };
+        }
     }
     
     // 跳轉和複製
+    if (params.get("data")===document.getElementById('input_msg').value) {  }
+    else {
+        navigator.clipboard.writeText(nins)
+            .then(() => { document.getElementById("content").innerHTML = "Copy!"; } )
+            .catch(err => { document.getElementById("content").innerHTML = "Recopy?"; } );
+        navigator.share({
+            title: 't.nins.cc',
+            text: document.getElementById("input_msg").value,
+            url: window.location.href, })
+            .then(() => { document.getElementById("content").innerHTML = "Share!"; } )
+            .catch(err => { document.getElementById("content").innerHTML = "Reshare?"; } );
+    }
+
+    /*
     if (params.get("data")) {  // 只需要跳轉
         ///window.open(url, "_blank", "noopener,noreferrer");
         ///return;
@@ -344,13 +394,13 @@ function send(){
             ///.then(() => window.open(url, "_blank", "noopener,noreferrer") )
             .catch(err => document.getElementById("content").innerHTML = "Resend." );
         ///return;
-    }
+    }  */
 
     // 連棟按鈕
     ///document.getElementById('T1').click();
     document.getElementById('DialogTrans').showModal();
     ///window.open( tts, '_blank', 'noopener,noreferrer' );
-    setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);
+    //////setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);
     return;
 
     // 開新視窗
@@ -399,11 +449,26 @@ document.addEventListener('click', function (e) {
 // 處理聲音
 ///document.querySelector('.goog-te-combo')
 document.getElementById('google_translate_element').addEventListener('change', (event) => {
-    const [url, tts, nins] = urls();  ///event.target.value
+    const params = new URLSearchParams(window.location.search);
+    const [url, tts, nins, urlm] = urls();  ///event.target.value
+    
     ///window.open( tts, '_blank', 'noopener,noreferrer' );
-    setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);
+    //////setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);
     ///const audio = new Audio(tts);
     ///audio.play();
+    
+    if (params.get("data")===document.getElementById('input_msg').value) {  }
+    else {
+        navigator.clipboard.writeText(nins)
+            .then(() => { document.getElementById("content").innerHTML = "Copy!"; } )
+            .catch(err => { document.getElementById("content").innerHTML = "Recopy?"; } );
+        navigator.share({
+            title: 't.nins.cc',
+            text: document.getElementById("input_msg").value,
+            url: window.location.href, })
+            .then(() => { document.getElementById("content").innerHTML = "Share!"; } )
+            .catch(err => { document.getElementById("content").innerHTML = "Reshare?"; } );
+    }
 });
 
 </script>
