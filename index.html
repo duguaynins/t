@@ -403,17 +403,21 @@ function send(){
     ///document.getElementById('TTS').click();  // 這不可能達成
     document.getElementById('DialogTrans').showModal();
     document.getElementById('DialogTrans').style.opacity = 1.0;
-    return;
+    
+    return;  // 暫時阻止跳轉
 
     // 跳轉測試
-    if (params.get("data")===document.getElementById('input_msg').value) {  }
+    if (params.get("data")===document.getElementById('input_msg').value) { 
+        window.open( tts, '_blank', 'noopener,noreferrer' );
+    }
     else {
         window.open( nins, '_blank', 'noopener,noreferrer' );
     }
 
     ///window.open( tts, '_blank', 'noopener,noreferrer' );
-    setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);  //****
-    return;
+    //////setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);  //****
+
+    return;  // 暫時阻止跳轉
 
     // 開新視窗
     ///window.open(url, "_blank", "noopener,noreferrer");
@@ -469,11 +473,6 @@ document.getElementById('google_translate_element').addEventListener('change', (
     const params = new URLSearchParams(window.location.search);
     const [url, tts, nins, urlm] = urls();  ///event.target.value
     
-    ///window.open( tts, '_blank', 'noopener,noreferrer' );
-    setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);  //***
-    ///const audio = new Audio(tts);
-    ///audio.play();
-    
     ///if (params.get("data")===document.getElementById('input_msg').value) {  }
     if (false) {  }
     else {
@@ -489,6 +488,13 @@ document.getElementById('google_translate_element').addEventListener('change', (
             .then(() => { document.getElementById("content").innerHTML = "Share!"; } )
             .catch(err => { document.getElementById("content").innerHTML = "Reshare?"; } );  */
     }
+    
+    return;  // 暫時阻止跳轉
+
+    ///window.open( tts, '_blank', 'noopener,noreferrer' );
+    setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);  //***
+    ///const audio = new Audio(tts);
+    ///audio.play();
 });
 
 </script>
