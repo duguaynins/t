@@ -95,7 +95,7 @@
           </div></div>
           
 <!-- 放置你原有的布局 -->
-<button type="button" class="main fat" onclick="document.getElementById('input_qr').click();" disabled>🖼️<p translate="no" style="margin: 0; padding: 0; font-size: 1vh;" class="label">image</p></button>
+<button type="button" class="main fat" onclick="window.open('https://t.nins.cc/', '_blank', 'noopener,noreferrer');" disabled>👻<p translate="no" style="margin: 0; padding: 0; font-size: 1vh;" class="label">nins</p></button>
 <input type="file" id="input_qr" style="display: none;" accept="image/*">
 <canvas id="canvas_qr" style="display:none;"></canvas>
 
@@ -156,7 +156,7 @@
         white-space: nowrap;
         display: none;
         ">
-        💡
+        💻
     </a>
     <a class="use main day" id="T2"
         style="
@@ -169,11 +169,24 @@
         white-space: nowrap;
         display: none;
         ">
-        👀
+        📱
     </a>
+    <button class="use main day" id="TTS"
+        onclick="window.open('https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=duguaynins', '_blank', 'noopener,noreferrer')"
+        style="
+        flex: 0 0 auto;
+        padding: 8px 12px;
+        border: 1px solid #000;
+        border-radius: 999px;
+        text-decoration: none;
+        cursor: pointer;
+        white-space: nowrap;
+        ">
+        💬
+    </button>
 </div>
 <div class="input-btn-wrapper" style="display: flex; align-items: stretch; width:100%; text-align: center;">
-  <!--button type="button" class="main " translate="no" onclick="document.getElementById('input_msg').value='https://';">❤️📄📚📜💡<p style="margin: 0; padding: 0; font-size: 1vh;" class="label">https://</p></button!-->
+  <!--button type="button" class="main " translate="no" onclick="document.getElementById('input_msg').value='https://';">💡💻👀📱❤️📄📚📜💡<p style="margin: 0; padding: 0; font-size: 1vh;" class="label">https://</p></button!-->
   <button type="button" class="main use fat" translate="no" onclick="send()">🚀<p translate="no" style="margin: 0; padding: 0; font-size: 1vh;" class="label">enter</p></button>
   <input id="input_msg" class="main use fat" type="text" name="url" autocomplete="off" placeholder="Oh! What would you like to communicate?" style="flex: 1;" list="list_msg"/>
   <datalist id="list_msg">
@@ -244,7 +257,7 @@ function btns(){
     ///const [url, tts, nins] = urls();
     const voice = "en";
     const encode = "duguaynins";
-    
+    /*
     container.insertAdjacentHTML('beforeend', `
         <button class="use main day" id="TTS"
             onclick="window.open('https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${voice}&q=${encode}', '_blank', 'noopener,noreferrer')"
@@ -259,7 +272,7 @@ function btns(){
             ">
             💬
         </button>
-    `);
+    `);*/
     container.insertAdjacentHTML('beforeend', `
         <button class="use main day"
             onclick="window.open('https://safebrowsing.google.com/safebrowsing/report_phish/', '_blank', 'noopener,noreferrer')"
@@ -309,9 +322,8 @@ function urls(){
     else { voice = tl; }
 
     ///if (params.get("voice")) { voice = params.get("voice"); }  // 只用於跳轉的最終發音
-    if (params.get("data")===document.getElementById('input_msg').value) {
-        voice = params.get("voice") || tl;
-    }
+    if (params.get("data")===document.getElementById('input_msg').value) { voice = params.get("voice") || tl; }
+    ///if (true) { voice = params.get("voice") || tl; }
     
 
     // URL 編碼文字
@@ -371,7 +383,8 @@ function send(){
     }
     
     // 跳轉和複製
-    if (params.get("data")===document.getElementById('input_msg').value) {  }
+    ///if (params.get("data")===document.getElementById('input_msg').value) {  }
+    if (true) {  }
     else {
         navigator.clipboard.writeText(nins)
             .then(() => { document.getElementById("content").innerHTML = "Copy!"; } )
@@ -397,8 +410,10 @@ function send(){
     }  */
 
     // 連棟按鈕
-    ///document.getElementById('T1').click();
+    ///document.getElementById('TTS').click();  // 這不可能達成
     document.getElementById('DialogTrans').showModal();
+    document.getElementById('DialogTrans').style.opacity = 1.0;
+
     ///window.open( tts, '_blank', 'noopener,noreferrer' );
     //////setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);
     return;
@@ -435,6 +450,7 @@ window.addEventListener('DOMContentLoaded', () => {  // 處理跳轉
         if (params.get("data")) { document.getElementById('input_msg').value = params.get("data"); }
         ///if (params.get("data")) { setTimeout(() => { send(); }, 5800); }  //***
     }
+    
 });
 
 // 處理跳轉
@@ -443,6 +459,10 @@ document.addEventListener('click', function (e) {
         const params = new URLSearchParams(window.location.search);
         if (params.get("data")) { document.getElementById('input_msg').value = params.get("data"); }
         if (params.get("data")) { setTimeout(() => { send(); }, 2000); }  //***
+
+        setTimeout(() => { 
+        if (params.get("data")) { document.getElementById('content').innerHTML = `<p translate="no">${params.get("data")}</p>`; }
+        }, 2000);  // 防止過長的內容
     }
 }, { once: true });
 
@@ -457,7 +477,8 @@ document.getElementById('google_translate_element').addEventListener('change', (
     ///const audio = new Audio(tts);
     ///audio.play();
     
-    if (params.get("data")===document.getElementById('input_msg').value) {  }
+    ///if (params.get("data")===document.getElementById('input_msg').value) {  }
+    if (true) {  }
     else {
         navigator.clipboard.writeText(nins)
             .then(() => { document.getElementById("content").innerHTML = "Copy!"; } )
