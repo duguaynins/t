@@ -311,7 +311,7 @@ function send(){
                 window.open( tts, '_blank', 'noopener,noreferrer' );
                 ///const audio = new Audio(tts);
                 ///audio.play();
-                return;
+                ///return;
             };
         }
         const btn2 = document.getElementById("T2");
@@ -322,7 +322,7 @@ function send(){
                 window.open( url, '_blank', 'noopener,noreferrer' );
                 ///const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${voice}&q=${encode}`);
                 ///audio.play();
-                return;
+                ///return;
                 
             };
         }
@@ -331,18 +331,19 @@ function send(){
     // 跳轉和複製
     if (params.get("data")) {  // 只需要跳轉
         ///window.open(url, "_blank", "noopener,noreferrer");
-        return;
+        ///return;
     }
     else {  // 需要複製和跳轉
         navigator.clipboard.writeText(nins)
             ///.then(() => window.open(url, "_blank", "noopener,noreferrer") )
             .catch(err => document.getElementById("content").innerHTML = "Resend." );
-        return;
+        ///return;
     }
 
     // 連棟按鈕
     ///document.getElementById('T1').click();
-    document.getElementById('DialogTrans').showModal()
+    document.getElementById('DialogTrans').showModal();
+    return;
 
     // 開新視窗
     ///window.open(url, "_blank", "noopener,noreferrer");
