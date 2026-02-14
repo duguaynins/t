@@ -343,6 +343,8 @@ function send(){
     // 連棟按鈕
     ///document.getElementById('T1').click();
     document.getElementById('DialogTrans').showModal();
+    ///window.open( tts, '_blank', 'noopener,noreferrer' );
+    setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);
     return;
 
     // 開新視窗
@@ -392,8 +394,10 @@ document.addEventListener('click', function (e) {
 ///document.querySelector('.goog-te-combo')
 document.getElementById('google_translate_element').addEventListener('change', (event) => {
     const [url, tts, nins] = urls();  ///event.target.value
-    const audio = new Audio(tts);
-    audio.play();
+    ///window.open( tts, '_blank', 'noopener,noreferrer' );
+    setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);
+    ///const audio = new Audio(tts);
+    ///audio.play();
 });
 
 </script>
