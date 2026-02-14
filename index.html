@@ -267,8 +267,8 @@ function send(){
     ///window.location.replace(url);
 }
 window.addEventListener('DOMContentLoaded', () => {  // 處理跳轉
-    const params = new URLSearchParams(window.location.search);
     document.getElementById('input_msg').value = params.get("data");
+    ///const params = new URLSearchParams(window.location.search);
     ///if (params.get("data")) { setTimeout(() => { send(); }, 5800); }  //***
 });
 
@@ -289,6 +289,7 @@ document.getElementById("input_msg").addEventListener("blur", (event) => {
 
 document.addEventListener('click', function (e) {
     if (e.target.tagName === 'BUTTON') {
+        const params = new URLSearchParams(window.location.search);
         if (params.get("data")) { setTimeout(() => { send(); }, 5800); }  //***
     }
 });
