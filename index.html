@@ -388,8 +388,8 @@ function send(){
     else {
         const copy = document.getElementById("input_msg").value + "\n" + nins;
         navigator.clipboard.writeText(copy)
-            .then(() => { document.getElementById("content").innerHTML = "Copy!"; } )
-            .catch(err => { document.getElementById("content").innerHTML = "Recopy?"; } );
+            .then(() => { document.getElementById("content").innerHTML = "Copyed!"; } )
+            .catch(err => { document.getElementById("content").innerHTML = "Again?"; } );
         /*
         navigator.share({
             title: 't.nins.cc',
@@ -405,7 +405,7 @@ function send(){
     document.getElementById('DialogTrans').style.opacity = 1.0;
 
     if (params.get("data")) {
-        window.open( tts, '_blank', 'noopener,noreferrer' );
+        window.open( tts, '_blank', 'noopener,noreferrer' );  // 為了推行網址被記憶
     }
     
     return;  // 暫時阻止跳轉
@@ -419,7 +419,7 @@ function send(){
     }
 
     ///window.open( tts, '_blank', 'noopener,noreferrer' );
-    //////setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);  //****
+    setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);  //****
 
     return;  // 暫時阻止跳轉
 
