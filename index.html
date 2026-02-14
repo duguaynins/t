@@ -323,7 +323,7 @@ function urls(){
 
     ///if (params.get("voice")) { voice = params.get("voice"); }  // 只用於跳轉的最終發音
     if (params.get("data")===document.getElementById('input_msg').value) { voice = params.get("voice") || tl; }
-    ///if (true) { voice = params.get("voice") || tl; }
+    ///if (false) { voice = params.get("voice") || tl; }
     
 
     // URL 編碼文字
@@ -384,7 +384,7 @@ function send(){
     
     // 跳轉和複製
     ///if (params.get("data")===document.getElementById('input_msg').value) {  }
-    if (true) {  }
+    if (false) {  }
     else {
         navigator.clipboard.writeText(nins)
             .then(() => { document.getElementById("content").innerHTML = "Copy!"; } )
@@ -478,7 +478,7 @@ document.getElementById('google_translate_element').addEventListener('change', (
     ///audio.play();
     
     ///if (params.get("data")===document.getElementById('input_msg').value) {  }
-    if (true) {  }
+    if (false) {  }
     else {
         navigator.clipboard.writeText(nins)
             .then(() => { document.getElementById("content").innerHTML = "Copy!"; } )
