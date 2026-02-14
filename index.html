@@ -257,7 +257,8 @@ function send(){
     const nins = `https://t.nins.cc/?data=${encode}`;
     ///await navigator.clipboard.writeText(nins);
     ///navigator.clipboard.writeText(nins);
-  
+    
+    if (params.get("data")) return;
     navigator.clipboard.writeText(nins)
     .then(() => window.open(url, "_blank", "noopener,noreferrer") )
     .catch(err => document.getElementById("content").innerHTML = "Resend." );
