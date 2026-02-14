@@ -279,17 +279,23 @@ function urls(){
     let voice = null;
     let sl = "auto";
     let tl = ( params.get("hl") || (navigator.language || navigator.userLanguage || "en-US") );  ///"en"
+
     ///const combo = document.getElementById('goog-te-combo');  /// querySelector, getElementById
     const combo = document.querySelector('.goog-te-combo');
     if (combo) { voice = combo.value; }  // 通常會在這裡決定分享語音的語言
     else { voice = tl; }
-    if (params.get("voice")) { voice = params.get("voice"); }  // 只用於跳轉的最終發音
+
+    ///if (params.get("voice")) { voice = params.get("voice"); }  // 只用於跳轉的最終發音
+    if (params.get("data")===document.getElementById('input_msg').value) {
+        voice = params.get("voice") || tl;
+    }
+    
 
     // URL 編碼文字
     const encode = encodeURIComponent(text);
     const url = `${baseUrl}?sl=${sl}&tl=${tl}&q=${encode}`;
     const tts = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${voice}&q=${encode}`;
-    const nins = `https://t.nins.cc/?data=${encode}`;
+    const nins = `https://t.nins.cc/?data=${encode}&voice=${voice}`;
     console.log(voice);
 
     return [url, tts, nins];
