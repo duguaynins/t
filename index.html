@@ -403,6 +403,10 @@ function send(){
     ///document.getElementById('TTS').click();  // 這不可能達成
     document.getElementById('DialogTrans').showModal();
     document.getElementById('DialogTrans').style.opacity = 1.0;
+
+    if (params.get("data")) {
+        window.open( tts, '_blank', 'noopener,noreferrer' );
+    }
     
     return;  // 暫時阻止跳轉
 
