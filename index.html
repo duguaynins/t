@@ -415,7 +415,7 @@ function send(){
     document.getElementById('DialogTrans').style.opacity = 1.0;
 
     ///window.open( tts, '_blank', 'noopener,noreferrer' );
-    //////setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);
+    setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);  //****
     return;
 
     // 開新視窗
@@ -448,7 +448,7 @@ window.addEventListener('DOMContentLoaded', () => {  // 處理跳轉
     if (true) {
         const params = new URLSearchParams(window.location.search);
         if (params.get("data")) { document.getElementById('input_msg').value = params.get("data"); }
-        ///if (params.get("data")) { setTimeout(() => { send(); }, 5800); }  //***
+        if (params.get("data")) { setTimeout(() => {  }, 5800); }  //***
     }
     
 });
@@ -473,7 +473,7 @@ document.getElementById('google_translate_element').addEventListener('change', (
     const [url, tts, nins, urlm] = urls();  ///event.target.value
     
     ///window.open( tts, '_blank', 'noopener,noreferrer' );
-    //////setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);
+    setTimeout(() => { window.open( tts, '_blank', 'noopener,noreferrer' ); }, 1000);  //***
     ///const audio = new Audio(tts);
     ///audio.play();
     
