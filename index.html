@@ -411,10 +411,11 @@ function send(){
         ///return;
     }  */
 
+    /*  // 複製文字自行跳轉***
     if (params.get("data")===document.getElementById('input_msg').value) {  }
     else {
         window.open( nins, '_blank', 'noopener,noreferrer' );
-    }
+    }  */
 
     // 連棟按鈕
     ///document.getElementById('TTS').click();  // 這不可能達成
@@ -466,10 +467,10 @@ document.addEventListener('click', function (e) {
         const params = new URLSearchParams(window.location.search);
         if (params.get("data")) { document.getElementById('input_msg').value = params.get("data"); }
         if (params.get("data")) { setTimeout(() => { send(); }, 2000); }  //***
-
+        /*  // 已經不需要了，會直接複製文字
         setTimeout(() => { 
         if (params.get("data")) { document.getElementById('content').innerHTML = `<p translate="no">${params.get("data")}</p>`; }
-        }, 2000);  // 防止過長的內容
+        }, 2000);  // 防止過長的內容  */
     }
 }, { once: true });
 
