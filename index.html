@@ -308,9 +308,9 @@ function send(){
             ///btn.textContent = "▶️";
             btn1.style.display = "block";
             btn1.onclick = () => {
-                ///window.open( `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${voice}&q=${encode}`, '_blank', 'noopener,noreferrer' );
-                const audio = new Audio(tts);
-                audio.play();
+                window.open( tts, '_blank', 'noopener,noreferrer' );
+                ///const audio = new Audio(tts);
+                ///audio.play();
                 return;
             };
         }
@@ -327,10 +327,6 @@ function send(){
             };
         }
     }
-
-    // 連棟按鈕
-    document.getElementById('T1').click();
-    document.getElementById('DialogTrans').showModal()
     
     // 跳轉和複製
     if (params.get("data")) {  // 只需要跳轉
@@ -343,6 +339,10 @@ function send(){
             .catch(err => document.getElementById("content").innerHTML = "Resend." );
         return;
     }
+
+    // 連棟按鈕
+    ///document.getElementById('T1').click();
+    document.getElementById('DialogTrans').showModal()
 
     // 開新視窗
     ///window.open(url, "_blank", "noopener,noreferrer");
@@ -385,7 +385,7 @@ document.addEventListener('click', function (e) {
         if (params.get("data")) { document.getElementById('input_msg').value = params.get("data"); }
         if (params.get("data")) { setTimeout(() => { send(); }, 2000); }  //***
     }
-});
+}, { once: true });
 
 // 處理聲音
 ///document.querySelector('.goog-te-combo')
