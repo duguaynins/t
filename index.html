@@ -329,7 +329,7 @@ function urls(){
     // URL 編碼文字
     const encode = encodeURIComponent(text);
     ///const url = `${baseUrl}?sl=${sl}&tl=${tl}&q=${encode}`;
-    const url = `https://translate.google.com/?sl=${sl}&tl=${tl}&q=${encode}&op=translate`;
+    const url = `https://translate.google.com/?sl=${sl}&tl=${tl}&q=${encode}`;  ///&op=translate
     const tts = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${voice}&q=${encode}`;
     const nins = `https://t.nins.cc/?data=${encode}&voice=${voice}`;
     const urlm = `https://translate.google.com/m?sl=${sl}&tl=${tl}&q=${encode}`;
@@ -511,6 +511,7 @@ document.getElementById('google_translate_element').addEventListener('change', (
     
 </body>
 </html>
+
 
 
 
