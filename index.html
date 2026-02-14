@@ -386,15 +386,17 @@ function send(){
     ///if (params.get("data")===document.getElementById('input_msg').value) {  }
     if (false) {  }
     else {
-        navigator.clipboard.writeText(nins)
+        const copy = document.getElementById("input_msg").value + "\n" + nins;
+        navigator.clipboard.writeText(copy)
             .then(() => { document.getElementById("content").innerHTML = "Copy!"; } )
             .catch(err => { document.getElementById("content").innerHTML = "Recopy?"; } );
+        /*
         navigator.share({
             title: 't.nins.cc',
             text: document.getElementById("input_msg").value,
             url: nins, })
             .then(() => { document.getElementById("content").innerHTML = "Share!"; } )
-            .catch(err => { document.getElementById("content").innerHTML = "Reshare?"; } );
+            .catch(err => { document.getElementById("content").innerHTML = "Reshare?"; } );  */
     }
 
     /*
@@ -485,15 +487,17 @@ document.getElementById('google_translate_element').addEventListener('change', (
     ///if (params.get("data")===document.getElementById('input_msg').value) {  }
     if (false) {  }
     else {
-        navigator.clipboard.writeText(nins)
+        const copy = document.getElementById("input_msg").value + "\n" + nins;
+        navigator.clipboard.writeText(copy)
             .then(() => { document.getElementById("content").innerHTML = "Copy!"; } )
             .catch(err => { document.getElementById("content").innerHTML = "Recopy?"; } );
+        /*
         navigator.share({
             title: 't.nins.cc',
             text: document.getElementById("input_msg").value,
             url: nins, })
             .then(() => { document.getElementById("content").innerHTML = "Share!"; } )
-            .catch(err => { document.getElementById("content").innerHTML = "Reshare?"; } );
+            .catch(err => { document.getElementById("content").innerHTML = "Reshare?"; } );  */
     }
 });
 
