@@ -2244,13 +2244,9 @@ document.addEventListener("pointerup", (event) => {
 
     
     <script>
-      ///20260216
-      document.getElementById("InputRoom").style.display = "block";
-      document.addEventListener('click', function handler(event) {
-        if (event.target.tagName === 'BUTTON') {
-          console.log('START:', event.target);
-          // 這裡放你的邏輯
-
+      function UserReady() {
+        window.addEventListener('load', () => {  
+          
           // 建立 style 標籤
           const style = document.createElement('style');
           style.textContent = `
@@ -2272,6 +2268,15 @@ document.addEventListener("pointerup", (event) => {
             }
           `;
           document.head.appendChild(style);
+        });
+      }
+      ///20260216
+      document.getElementById("InputRoom").style.display = "block";
+      document.addEventListener('click', function handler(event) {
+        if (event.target.tagName === 'BUTTON') {
+          console.log('START:', event.target);
+          // 這裡放你的邏輯
+          ///UserReady();
           // 這裡放你的邏輯
         }
       }, { once: true });
