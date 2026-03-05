@@ -1744,7 +1744,7 @@ document.addEventListener("pointerup", (event) => {
           const need = "must respond in the language specified by the lang field.";
           const hint = "Users are advised to avoid using any unknown links";  ///Avoid using any unknown links
 
-          const bynins = `The analysis technology prompt is provided by "nins.cc"`;
+          const bynins = `The prompt is provided by "nins.cc"`;
           const prompt = `notice=${bynins}!\n---\nlang=${lang}.\ntask=${task}.\nneed=${need}.\nalarm=${hint}.\n---\ninput=${msgtTexts}.\n---\nnotice=${bynins}!`;  ///vt
           const openai = `https://chatgpt.com/?prompt=` + encodeURIComponent( prompt );
           const google = `https://www.google.com/search?udm=50&aep=1&aic=0&hl=${lang}&q=` + encodeURIComponent( prompt );
@@ -2309,5 +2309,6 @@ document.addEventListener("pointerup", (event) => {
     </script>
 </body>
 </html>
+
 
 
