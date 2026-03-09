@@ -1606,6 +1606,17 @@ document.addEventListener("pointerup", (event) => {
               
         // 正式進入頻道**
         channel.presence.enter();
+        channel.presence.enter({
+            ///name: 'Alice',
+            ///role: 'moderator',
+            ///avatar: 'https://example.com/avatar.png',
+            ///lastActive: Date.now(),
+            ///status: 'online',
+            ///mood: 'happy',
+            ///location: 'Taipei, Taiwan',
+            webpush: Cookies.get("webpush")
+        
+        });
         ///document.getElementById('DialogAds').showModal();startSkipAdsProgress();  ///test:20251221***ads
 
         // 監聽**
@@ -2309,6 +2320,7 @@ document.addEventListener("pointerup", (event) => {
     </script>
 </body>
 </html>
+
 
 
 
