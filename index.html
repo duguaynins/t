@@ -1618,6 +1618,16 @@ document.addEventListener("pointerup", (event) => {
         
         });
         ///document.getElementById('DialogAds').showModal();startSkipAdsProgress();  ///test:20251221***ads
+        
+        channel.presence.get((err, members) => {  ///20260310
+
+            const onlineUsers = members.map(m => m.clientId);
+            console.log('目前在線:', onlineUsers);
+            
+            const userData = members.map(m => m.data);
+            console.log('使用者資料:', userData);
+        
+        });
 
         // 監聽**
         ///channel.attach(() => {
@@ -2320,6 +2330,7 @@ document.addEventListener("pointerup", (event) => {
     </script>
 </body>
 </html>
+
 
 
 
