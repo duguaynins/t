@@ -1621,7 +1621,7 @@ document.addEventListener("pointerup", (event) => {
         ///document.getElementById('DialogAds').showModal();startSkipAdsProgress();  ///test:20251221***ads
 
         /*
-        ///getOnlineUsers(members)
+        ///getUsers(members)
         channel.presence.get((err, members) => {  ///20260310
 
             const onlineUsers = members.map(m => m.clientId);
@@ -1645,7 +1645,7 @@ document.addEventListener("pointerup", (event) => {
             
             // 紀錄事件**
             console.log(`${member.clientId} has entered.`);
-            channel.presence.get((err, members) => {  getOnlineUsers(members);
+            channel.presence.get((err, members) => {  getUsers(members);pushUsers(members);
               const p = document.createElement('p');
               p.innerHTML = `${emoji_clock}${ninsTimes}<br>（🟢${member.clientId || 'USER'}）`;p.style.color = 'green';
               p.setAttribute('translate', 'no');  //???
@@ -1681,7 +1681,7 @@ document.addEventListener("pointerup", (event) => {
             
             // 紀錄事件**
             console.log(`${member.clientId} has left.`);
-            channel.presence.get((err, members) => {  getOnlineUsers(members);
+            channel.presence.get((err, members) => {  getUsers(members);
               const p = document.createElement('p');
               p.innerHTML = `${emoji_clock}${ninsTimes}<br>（🔴${member.clientId || 'USER'}）`;p.style.color = 'red';
               p.setAttribute('translate', 'no');  //???
@@ -2331,20 +2331,23 @@ document.addEventListener("pointerup", (event) => {
         }
       }, { once: true });
 
-      async function getOnlineUsers(members) {
+      let clientIds;
+      let userDatas;
+      async function getUsers(members) {
 
-        const clientIds = members.map(m => m.clientId);
+        clientIds = members.map(m => m.clientId);
         console.log('目前在線:', clientIds);
         
-        const userDatas = members.map(m => m.data.webpush);  ///m.data  ///追加webpush
+        userDatas = members.map(m => m.data.webpush);  ///m.data  ///追加webpush
         console.log('使用者資料:', userDatas);
+      }
 
+      async function pushUsers(members, title="nins/copyright", body="nins!!!") {
         // 以下為新增測試
         const payload = `{
         "data": {
-            "title": "Holiday",
-            "body": "Hello World",
-            "url": "https://copyright.nins.cc/"
+            "title": ${title},
+            "body": ${body},
         },
         "subscription": ${JSON.stringify(userDatas)}
         }`;
