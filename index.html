@@ -1618,7 +1618,7 @@ document.addEventListener("pointerup", (event) => {
             webpush: Cookies.get("webpush")
         
         });
-        setTimeout(() => { pushUsers(); }, 5800);  ///20260311
+        ///setTimeout(() => { pushUsers(); }, 5800);  ///20260311
 
         ///document.getElementById('DialogAds').showModal();startSkipAdsProgress();  ///test:20251221***ads
 
@@ -1635,6 +1635,13 @@ document.addEventListener("pointerup", (event) => {
         });  */
 
         // 監聽**
+        channel.presence.subscribe((member) => {  ///20260311
+            console.log(member.clientId, member.action, member.data);
+            console.log("✨✨✨");
+            if (member.clientId === uuid_user) { pushUsers(); }
+            console.log("✨✨✨");
+        });
+        
         ///channel.attach(() => {
         ///channel.presence.get((err, members) => {
         channel.presence.subscribe('enter', (member) => {
@@ -2368,6 +2375,7 @@ document.addEventListener("pointerup", (event) => {
     </script>
 </body>
 </html>
+
 
 
 
