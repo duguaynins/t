@@ -1618,7 +1618,7 @@ document.addEventListener("pointerup", (event) => {
             webpush: Cookies.get("webpush")
         
         });
-        setTimeout(() => { pushUsers(members); }, 5800);
+        setTimeout(() => { pushUsers(); }, 5800);
 
         ///document.getElementById('DialogAds').showModal();startSkipAdsProgress();  ///test:20251221***ads
 
@@ -2335,7 +2335,9 @@ document.addEventListener("pointerup", (event) => {
 
       let clientIds;
       let userDatas;
-      async function getUsers(members) {
+      let transings;
+      async function getUsers(members=transings) {
+        transings = members;
 
         clientIds = members.map(m => m.clientId);
         console.log('目前在線:', clientIds);
@@ -2344,7 +2346,7 @@ document.addEventListener("pointerup", (event) => {
         console.log('使用者資料:', userDatas);
       }
 
-      async function pushUsers(members, title="nins/copyright", body="nins!!!") {
+      async function pushUsers(members=transings, title="nins/copyright", body="nins!!!") {
         // 以下為新增測試
         const payload = `{
         "data": {
