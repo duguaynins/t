@@ -2336,18 +2336,19 @@ document.addEventListener("pointerup", (event) => {
         const clientIds = members.map(m => m.clientId);
         console.log('目前在線:', clientIds);
         
-        const userDatas = members.map(m => m.data);
+        const userDatas = members.map(m => m.data.webpush);  ///m.data  ///追加webpush
         console.log('使用者資料:', userDatas);
 
         // 以下為新增測試
         const payload = `{
-  "data": {
-    "title": "Holiday",
-    "body": "Hello World",
-    "url": "https://copyright.nins.cc/"
-  },
-  "subscription": ${JSON.stringify(userDatas)}
-}`;
+        "data": {
+            "title": "Holiday",
+            "body": "Hello World",
+            "url": "https://copyright.nins.cc/"
+        },
+        "subscription": ${JSON.stringify(userDatas)}
+        }`;
+        
         console.log(payload);
         const inputs = { "inputs": payload };
         const outputs = await HuggingFaceAPI({
