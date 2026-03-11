@@ -1606,7 +1606,7 @@ document.addEventListener("pointerup", (event) => {
         input.value = room;
               
         // 正式進入頻道**
-        channel.presence.enter();
+        ///channel.presence.enter();
         channel.presence.enter({
             ///name: 'Alice',
             ///role: 'moderator',
@@ -1618,6 +1618,8 @@ document.addEventListener("pointerup", (event) => {
             webpush: Cookies.get("webpush")
         
         });
+        setTimeout(() => { pushUsers(members); }, 5800);
+
         ///document.getElementById('DialogAds').showModal();startSkipAdsProgress();  ///test:20251221***ads
 
         /*
@@ -1645,7 +1647,7 @@ document.addEventListener("pointerup", (event) => {
             
             // 紀錄事件**
             console.log(`${member.clientId} has entered.`);
-            channel.presence.get((err, members) => {  getUsers(members);pushUsers(members);
+            channel.presence.get((err, members) => {  getUsers(members);
               const p = document.createElement('p');
               p.innerHTML = `${emoji_clock}${ninsTimes}<br>（🟢${member.clientId || 'USER'}）`;p.style.color = 'green';
               p.setAttribute('translate', 'no');  //???
@@ -2364,7 +2366,6 @@ document.addEventListener("pointerup", (event) => {
     </script>
 </body>
 </html>
-
 
 
 
