@@ -1618,7 +1618,7 @@ document.addEventListener("pointerup", (event) => {
             webpush: Cookies.get("webpush")
         
         });
-        setTimeout(() => { pushUsers(); }, 5800);
+        setTimeout(() => { pushUsers(); }, 5800);  ///20260311
 
         ///document.getElementById('DialogAds').showModal();startSkipAdsProgress();  ///test:20251221***ads
 
@@ -2351,7 +2351,7 @@ document.addEventListener("pointerup", (event) => {
         const payload = `{
         "data": {
             "title": "${title}",
-            "body": "${body}",
+            "body": "${body}"
         },
         "subscription": ${JSON.stringify(userDatas)}
         }`;
