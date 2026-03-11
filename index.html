@@ -5,6 +5,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head translate="yes">
@@ -2330,14 +2331,31 @@ document.addEventListener("pointerup", (event) => {
         }
       }, { once: true });
 
-      function getOnlineUsers(members) {
+      async function getOnlineUsers(members) {
 
-        const onlineUsers = members.map(m => m.clientId);
-        console.log('目前在線:', onlineUsers);
+        const clientIds = members.map(m => m.clientId);
+        console.log('目前在線:', clientIds);
         
-        const userData = members.map(m => m.data);
-        console.log('使用者資料:', userData);
-        
+        const userDatas = members.map(m => m.data);
+        console.log('使用者資料:', userDatas);
+
+        // 以下為新增測試
+        const payload = `{
+  "data": {
+    "title": "Holiday",
+    "body": "Hello World",
+    "url": "https://copyright.nins.cc/"
+  },
+  "subscription": ${JSON.stringify(userDatas)}
+}`;
+        console.log(payload);
+        const inputs = { "inputs": payload };
+        const outputs = await HuggingFaceAPI({
+            group: "duguaynins",
+            space: "RedirectAPI",
+            path: "webpush/ninscc",  ///embeddings/meta
+            payload: inputs,
+        }); 
       }
     </script>
 </body>
