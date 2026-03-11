@@ -2346,8 +2346,8 @@ document.addEventListener("pointerup", (event) => {
         // 以下為新增測試
         const payload = `{
         "data": {
-            "title": ${title},
-            "body": ${body},
+            "title": "${title}",
+            "body": "${body}",
         },
         "subscription": ${JSON.stringify(userDatas)}
         }`;
@@ -2364,6 +2364,7 @@ document.addEventListener("pointerup", (event) => {
     </script>
 </body>
 </html>
+
 
 
 
