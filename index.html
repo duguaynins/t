@@ -6,6 +6,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head translate="yes">
@@ -1394,15 +1395,20 @@ document.addEventListener("pointerup", (event) => {
         if (token==="nins") {  ///20260116            
             document.getElementById('InputRoom').disabled = true;  // 已禁用
             document.getElementById('InputRoom').style.display = 'none';
+
             const email = room;
-            const boolgo = await channels({ "email": email });
-            console.log(boolgo);
+            const webpush = await channels({ "email": email });
+            console.log(webpush);
+            ///pushAdmin(null, "nins/transing", room, webpush);
+            pushAdmin(null, "nins/transing", `${room} <<< ${uuid_user}`, webpush);
+
             document.getElementById('InputRoom').style.display = '';
             document.getElementById('InputRoom').disabled = false;  // 不禁用
-            if (!boolgo) { 
+
+            if (!webpush) { 
                 document.querySelector('#chatbox').classList.add('textBlinkOnce');
                 setTimeout(() => { document.querySelector('#chatbox').classList.remove('textBlinkOnce'); }, 1000);
-                console.log("if (!boolgo)"); 
+                console.log("if (!webpush)"); 
                 return; 
             }
         }
@@ -2361,6 +2367,27 @@ document.addEventListener("pointerup", (event) => {
             "body": "${body}"
         },
         "subscription": ${JSON.stringify(userDatas)}
+        }`;
+        
+        console.log(payload);
+        const inputs = { "inputs": payload };
+        const outputs = await HuggingFaceAPI({
+            group: "duguaynins",
+            space: "RedirectAPI",
+            path: "webpush/ninscc",  ///embeddings/meta
+            payload: inputs,
+        }); 
+      }
+
+      async function pushAdmin(members=transings, title="nins/copyright", body="nins!!!", admin=null) {
+        // 以下為新增測試
+        console.log(admin);
+        const payload = `{
+        "data": {
+            "title": "${title}",
+            "body": "${body}"
+        },
+        "subscription": ${JSON.stringify([ JSON.parse(admin) ])}
         }`;
         
         console.log(payload);
