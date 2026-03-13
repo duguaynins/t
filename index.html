@@ -283,7 +283,8 @@
                         const url = `https://deurl.nins.cc/?data=${encodeURIComponent(result.text)}`;
                         stopScanning();
                         scanResult.innerHTML = `<a href="${url}">${result.text}</a>`;
-                        window.open(url, "_blank", "noopener,noreferrer");
+                        ///window.open(url, "_blank", "noopener,noreferrer");
+                        setTimeout(function () { window.open(url, "_blank", "noopener,noreferrer"); }, 2200);
                         ///20260312***END
 
                         return;
