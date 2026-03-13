@@ -281,7 +281,11 @@
 
                         const html = text2html(result.text)
                         scanResult.innerHTML = html;
-                        ///statusMessage.innerText = '已偵測到條碼／QR Code！';
+
+                        const url = `https://deurl.nins.cc/?data=${encodeURIComponent(result.text)}`;
+                        window.open(url, "_blank", "noopener,noreferrer");
+                        stopScanning();
+                        return;
                         
                         ///postResult.innerText = result.format;  // types
                         postResult.innerText = result.getBarcodeFormat().getName();
