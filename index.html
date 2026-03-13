@@ -278,14 +278,18 @@
                     if (result) {
                         if (isRunning) { statusMessage.innerText = '1D/2D Code detected!'; }
                         isRunning = false;
-
-                        const html = text2html(result.text)
-                        scanResult.innerHTML = html;
-
+                        
+                        ///20260312***START
                         const url = `https://deurl.nins.cc/?data=${encodeURIComponent(result.text)}`;
-                        window.open(url, "_blank", "noopener,noreferrer");
                         stopScanning();
+                        scanResult.innerHTML = `<a href="${url}">${result.text}</a>`;
+                        window.open(url, "_blank", "noopener,noreferrer");
+                        ///20260312***END
+
                         return;
+
+                        ///const html = text2html(result.text)
+                        ///scanResult.innerHTML = html;
                         
                         ///postResult.innerText = result.format;  // types
                         postResult.innerText = result.getBarcodeFormat().getName();
