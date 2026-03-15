@@ -54,7 +54,10 @@
           <input type="file" id="input_2d" style="display:none">
           <canvas id="canvas_2d" style="display:none;"></canvas>
 
-          <div id="contentbox" style="border:1px solid #ccc; overflow:auto; width:100%; flex:1;">
+          <!--button type="button" class="main use fat" onclick="document.getElementById('input_2d').click();">🖼️<p translate="no" style="margin: 0; padding: 0; font-size: 1vh;" class="label">2D barcode</p></button>
+          <div id="button_sw"></div!-->
+
+          <div id="content" class="center" style="display:flex; border:1px solid #ccc; overflow:auto; width:100%; flex:1;">
           
               <div id="Container" style="background:white; color:black;">
           
@@ -65,7 +68,10 @@
                       <!--pre id="post-result"></pre-->
                   </div>
                   
-                  <div id="scanner-container"  >
+                  <div id="scanner-container" style="
+                    max-width: 100vw;    /* 不超過視窗寬度 */
+                    max-height: 100vh;   /* 不超過視窗高度 */
+                    object-fit: contain;  /* 保持比例，完整顯示 */" >
                       <video id="video-preview" autoplay="" muted="" playsinline="" style="width:100%;"></video>
                       <div id="scan-line"></div>
                   </div>
@@ -277,9 +283,9 @@
                     if (!result) {
                         ///if (!isRunning) { statusMessage.innerHTML = 'Searching for 2D barcodes, <a href="#" id="uploadLink">Or click here to upload a 2D barcode!</a>'; }  ///Running~
                         if (!isRunning) { statusMessage.innerHTML = `
-                            <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">
+                            <label for="input_2d">
                                 You can also click click here to upload a 2D barcode!
-                            </label>`; }
+                            </label>`; }  /// style="color:blue; cursor:pointer; text-decoration: underline;"
                         isRunning = true;
                     }
                     if (result) {
@@ -338,15 +344,17 @@
         } catch (e) {
             ///showMessageBox('啟動攝影機失敗，請確認權限及裝置是否可用。');
             ///statusMessage.innerText = '啟動攝影機失敗。';
-            statusMessage.innerText = 'ALARM: ' + e;  ///20260315
-            scanResult.innerHTML = `
-                            <label for="" style="color:blue; cursor:pointer; text-decoration: underline;">
-                                [📷]
-                            </label>
-                            or
-                            <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">
-                                [🖼️]
-                            </label>`;
+            if (true) {
+                statusMessage.innerText = 'ALARM: ' + e;  ///20260315
+                scanResult.innerHTML = `
+                                <label onclick="startScanning();" style="color:blue; cursor:pointer; text-decoration: underline;">
+                                    [📷]
+                                </label>
+                                or
+                                <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">
+                                    [🖼️]
+                                </label>`;
+            }
         }
     }
 
@@ -435,7 +443,7 @@ document.getElementById('input_2d').addEventListener('change', function(e) {  //
                 showDecode("");  ///***
                 statusMessage.innerText = "Again";  ///20260315
                 scanResult.innerHTML = `
-                                <label for="" style="color:blue; cursor:pointer; text-decoration: underline;">
+                                <label onclick="startScanning();" style="color:blue; cursor:pointer; text-decoration: underline;">
                                     [📷]
                                 </label>
                                 or
