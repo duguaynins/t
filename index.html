@@ -51,6 +51,9 @@
           nins/decoding
           </div></div>
 
+          <input type="file" id="input_2d" style="display:none">
+          <canvas id="canvas_2d" style="display:none;"></canvas>
+
           <div id="contentbox" style="border:1px solid #ccc; overflow:auto; width:100%; flex:1;">
           
               <div id="Container" style="background:white; color:black;">
@@ -272,7 +275,11 @@
                 async (result, err) => {   // <-- 這裡改成 async 函式，取消將無法運行。
                     ///if (!result) {statusMessage.innerText = '運行中';}
                     if (!result) {
-                        if (!isRunning) { statusMessage.innerHTML = 'Searching for 2D barcodes, <a href="#" id="uploadLink">Or upload a 2D barcode!</a>'; }  ///Running~
+                        ///if (!isRunning) { statusMessage.innerHTML = 'Searching for 2D barcodes, <a href="#" id="uploadLink">Or click here to upload a 2D barcode!</a>'; }  ///Running~
+                        if (!isRunning) { statusMessage.innerHTML = `
+                            <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">
+                                You can also click click here to upload a 2D barcode!
+                            </label>`; }
                         isRunning = true;
                     }
                     if (result) {
@@ -331,7 +338,15 @@
         } catch (e) {
             ///showMessageBox('啟動攝影機失敗，請確認權限及裝置是否可用。');
             ///statusMessage.innerText = '啟動攝影機失敗。';
-            statusMessage.innerText = 'ALARM: ' + e;
+            statusMessage.innerText = 'ALARM: ' + e;  ///20260315
+            scanResult.innerHTML = `
+                            <label for="" style="color:blue; cursor:pointer; text-decoration: underline;">
+                                [📷]
+                            </label>
+                            or
+                            <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">
+                                [🖼️]
+                            </label>`;
         }
     }
 
@@ -363,6 +378,79 @@
         ///await enumerateVideoDevices();
         await startScanning();
     });
+</script>
+
+
+<!-- deQR ================================================== -->
+<script src="https://copyright.nins.cc/children/0001/jsQR.min.js"></script>
+<script>
+function showDecode(data) {  ///20260312
+    stopScanning();
+
+    const url = `https://deurl.nins.cc/?data=${encodeURIComponent(data)}`;
+    scanResult.innerHTML = `<a href="${url}">${data}</a>`;
+    setTimeout(function () { window.open(url, "_blank", "noopener,noreferrer"); }, 2200);
+
+    return `<a href="${url}">${data}</a>`;
+}
+
+document.getElementById('input_2d').addEventListener('change', function(e) {  ///20260315
+    stopScanning();
+  
+    const canvas = document.getElementById('canvas_2d');
+    const ctx = canvas.getContext('2d');
+
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+            // 1. 設定畫布大小與圖片一致
+            document.getElementById('status-message').innerHTML = "The image has been received, please wait...";
+            canvas.width = img.width;
+            canvas.height = img.height;
+            
+            // 2. 將圖片畫到畫布上
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            
+            // 3. 取得畫布的像素資料
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // 4. 使用 jsQR 解析
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+            if (code) {
+                console.log("QR Code!:", code.data);
+                ///resultText.innerText = "掃描結果：" + code.data;
+                document.getElementById('status-message').innerHTML = "Scan complete. QR code found!";  /// Send Query available!
+                showDecode(code.data);
+                statusMessage.innerText = "Output";  ///20260315
+                ///scanResult.innerHTML = ``;
+            } else {
+                console.log("QR Code?:", "");
+                ///resultText.innerText = "掃描失敗：無法在圖片中找到有效的 QR Code。";
+                document.getElementById('status-message').innerHTML = "Please increase the clarity and submit only the barcode.";  /// Send Query unavailable.
+                showDecode("");  ///***
+                statusMessage.innerText = "Again";  ///20260315
+                scanResult.innerHTML = `
+                                <label for="" style="color:blue; cursor:pointer; text-decoration: underline;">
+                                    [📷]
+                                </label>
+                                or
+                                <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">
+                                    [🖼️]
+                                </label>`;
+            }
+          
+            ///document.getElementById("input_msg").disabled = false;
+            ///document.getElementById("input_qr").disabled = false;
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+});
 </script>
 
 </body>
