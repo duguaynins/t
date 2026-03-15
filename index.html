@@ -272,7 +272,7 @@
                 async (result, err) => {   // <-- 這裡改成 async 函式，取消將無法運行。
                     ///if (!result) {statusMessage.innerText = '運行中';}
                     if (!result) {
-                        if (!isRunning) { statusMessage.innerText = 'Searching for 2D barcodes...'; }  ///Running~
+                        if (!isRunning) { statusMessage.innerHTML = 'Searching for 2D barcodes, <a href="#" id="uploadLink">Or upload a 2D barcode!</a>'; }  ///Running~
                         isRunning = true;
                     }
                     if (result) {
