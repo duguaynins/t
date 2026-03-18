@@ -8,6 +8,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head translate="yes">
@@ -1265,11 +1266,19 @@ document.addEventListener("pointerup", (event) => {
           ）</span>
           
           <p id="${randomID}_2" translate="no" style="display:block; color:gray;">（ 👁️<span translate="no">${xmsg}</span> ）</p>
+          <div id="${randomID}_2" translate="yes" style="display:block; color:gray;">（ 👁️<div contenteditable="true" style="display: inline-block; color:gray;">
+            ${xmsg}
+          </div> ）</div>
         `;
         
         // 添加紀錄魚標點之後
         const anchor = document.getElementById('anchor');
         anchor.after(div);
+        anchor.scrollIntoView({
+            behavior: "smooth", // 平滑滾動，若要瞬間跳轉則用 "auto"
+            block: "start", // 垂直對齊方式：start, center, end, 或 nearest
+            inline: "nearest" // 水平對齊方式
+        });
         // 🔄🤖🔣👄👂🆔🎯  // 👻👁️📏♊🧠❓
     }
     
@@ -1881,6 +1890,15 @@ document.addEventListener("pointerup", (event) => {
             payload: inputs,
         }); 
       }
+
+    </script>
+    <script>
+    const trees = document.querySelectorAll('.tree');
+
+    trees.forEach(tree => {
+      const id = tree.dataset.treeId; // 直接拿到 "001"
+      console.log(`正在處理編號為 ${id} 的樹...`);
+    });
     </script>
 </body>
 </html>
