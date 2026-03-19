@@ -8,7 +8,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head translate="yes">
@@ -20,7 +19,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <meta name="description" content="© 2024 NINS (by JPGT). By using any of the services, it means you have agreed to any content and all content!">
     <link rel="canonical" href="https://copyright.nins.cc/">
-    <title translate="no">nins/transllm</title>
+    <title translate="no">nins/transing</title>
     <!--title translate="no">これが自由だ</title-->
 
     
@@ -299,7 +298,7 @@
         <strong id="anything" style=""><b translate="no">© nins. </b>Use chat channels to easily start communicating with anyone.</strong>
         <div id="title" style="" translate="no">
         <div style="margin: 10px;" onclick="document.getElementById('DialogCheck').showModal();console.log(new Date().toLocaleString(), '🙉');">
-        nins/transllm
+        nins/transing
         </div></div>
 
         <div id="btn-list" style="margin: 0vw; display: flex; flex-direction: row; border: 1px solid #cdcdcd;" translate="no">
@@ -607,10 +606,10 @@ document.addEventListener("pointerup", (event) => {
 
       async function semantic(params) { 
         console.log('翻譯比對:', params);
-        const { smsg, rmsg } = params;
-        if (smsg === rmsg) { return "{goog:1.0||meta:1.0}"; }
+        const { a, b } = params;
+        if (a === b) { return "{goog:1.0||meta:1.0}"; }
 
-        const inputs = { "inputs": { "a": smsg, "b": rmsg } };
+        const inputs = { "inputs": { "a": a, "b": b } };
         const outputs = await HuggingFaceAPI({
           group: "duguaynins",
           space: "RedirectAPI",
@@ -1180,39 +1179,140 @@ document.addEventListener("pointerup", (event) => {
     // 接收****
     // 立即註冊訂閱監聽
     async function sendMessage() {
+        lastSentTime = Date.now();
 
+        ///if ( new Set(userDatas).has(adminData) ) {} else { }
+        if ( new Set(userDatas.map(u => JSON.stringify(u))).has( JSON.stringify(adminData) ) ) {} else { 
+            document.getElementById('InputMsg').focus(); 
+            document.getElementById('InputMsg').value = "The admin is not here.";
+            return; 
+        }  ///20250315
+
+        ///let message = null;
+        ///let source = null;
+        ///let target = null;
+        
+        // 確保內容***
         const input = document.getElementById('InputMsg');
         const msg = input.value;
         
-        // 檢查空白
+        ///if (!msg) {              document.getElementById('InputMsg').focus();return; }  // 判斷內容存在與否
+        ///if (msg.trim() === "") { document.getElementById('InputMsg').focus();return; }
         if ( (!msg) || (msg.trim() === "") ) {              
             document.getElementById('InputMsg').focus(); 
             document.getElementById('InputMsg').value = "How do I use this?";
             return; 
-        }
+        }  // 判斷內容存在與否
         
         // 正規化去除使用者輸入的表情***
-        let xmsg = msg;  /*
         const emojiRegex = /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDDFF])/g;
-        xmsg = msg.replace( emojiRegex, '' )
-        if (!xmsg) return;  */
+        // 比對法
+        ///const hasEmoji = emojiRegex.test(msg);
+        ///const emojis = msg.match(emojiRegex);
+        // 清除法
+        ///message = "I sent a test message.";
+        ///message = "...";
+        ///source = 'en';
+        ///target = xlang;
+        let xmsg = msg.replace( emojiRegex, '' )
+        if (!xmsg) return;  //???
+        ///await translate(message, source, target);  // 進行翻譯**
         
-        // 刪除輸入框內容***
+        // 測試先行刪除***
         input.value = '';
-
-        // 翻譯
         
-        // 產生短隨機 ID
-        ///const randomID = "id_" + Math.random().toString(36).substring(2, 8);  
-        const randomID = new Date().toISOString();
+        
+        
+        
+        
+        // 測試IFRAME***
+        
+          // 1. 定義 IFRAME 內部要顯示的完整 HTML 內容
+          
+          // 2. 獲取要插入 IFRAME 的容器
+      
+          // 3. 創建一個 IFRAME 元素
+      
+          // 4. 將定義好的 HTML 內容賦值給 IFRAME 的 srcdoc 屬性 
+          
+          // 5. 清空 <details> 除了 <summary> 的內容 
+          
+          // 6. 插入 iframe（在 summary 後）
+          
+        // 測試IFRAME***
+        
+        
+        // 聊天的時間記錄***
+        
+        ///window.open("https://translate.google.com/?sl=auto&tl=en&op=translate&text=" + smsg, "_blank");alert();
+        ///document.getElementById('LinkTrans').href = "https://translate.google.com/?sl=auto&tl=en&op=translate&text=" + smsg;
+        ///const imsg = prompt("（en: ***）");
+
+        
+        let smsg = "";let tmsg = "";let imsg = "";
+        if (!!document.getElementById("AITransing").checked) {  ///SkipForm, SwitchSlang
+          // 追加的更新測試***
+        } else {
+          // 這是原本的翻譯******  // 進行翻譯**
+        }
+
+        ///必定運行
+        if (true) {
+          print(`必定運行，基礎翻譯。。。`);
+          // 這是原本的翻譯******  // 進行翻譯**
+
+          smsg = xmsg;
+          tmsg = await translate({ "text": smsg, "source": slang, "target": tlang }); if (!tmsg) return;
+          imsg = await translate({ "text": smsg, "source": slang, "target": ilang }); if (!imsg) return;
+        }
+        ///但三者相同時
+        if (smsg === tmsg && tmsg === imsg) {
+          print(`三者相同，進階翻譯！！！`);          
+          // 追加的更新測試***
+
+          const gens = await generate({ "text": xmsg, "source": null, "target": {tl:tlang, il:ilang} });  // 測試取代首次翻譯  //ALARM???
+          const obj = JSON.parse(gens.result);
+          console.log(gens);
+          console.log(gens.result);
+
+          ///const keys = Object.keys(obj);  // 取出所有鍵
+          ///const values = Object.values(obj);  // 取出所有數值
+
+          smsg = xmsg;
+          tmsg = obj[tlang];  ///obj.tlang;  ///
+          imsg = obj[ilang];  ///obj.ilang;  ///
+          console.log(smsg);
+          console.log(tmsg);
+          console.log(imsg);
+
+          ///console.log(gens);
+          ///const rmsg = gens; if (!gens) return;
+          
+          ///let smsg = await translate({ "text": gens, "source": rlang, "target": slang }); if (!smsg) return;   //OK
+          ///const imsg = await translate({ "text": gens, "source": rlang, "target": ilang }); if (!imsg) return;  //OK
+          ///smsg = xmsg; if (!smsg) return;  // 還原使用者的語言
+
+        }
+        
+        
+        ///const randomID = "id_" + Math.random().toString(36).substring(2, 8);  // 產生短隨機 ID
+        
         const nowUTC = new Date().toISOString();
+        console.log(nowUTC);  // 例如：2025-06-14T09:22:30.123Z
         const hourUTC = new Date(nowUTC).getUTCHours();  // 取得 UTC 小時（0-23）
         
         const emoji_clock = EmojisClock[hourUTC];
-        const emoji_textrl = '';
-        const emoji_textil = '';
-        const emoji_textsl = '';
-        const emoji_langxl = '';  //🔄🤖🔣👄👂🆔
+        const emoji_textrl = '🔄';
+        const emoji_textil = '🤖';
+        const emoji_textsl = '🔣';
+        const emoji_langxl = '👄';  //👂
+        const result = (emoji_clock + nowUTC) + ("🔄" + imsg) + ("🤖" + tmsg) + ("🔣" + smsg) + ("👄" + tlang + "|" + slang);/// + ("🆔" + randomID);  //???
+        // 穩定：發送訊息
+        ///channel.publish('message', result);
+        
+        // 語意距離
+        const distance = await semantic({ "a": smsg, "b": imsg }); // duguaynins/SemanticDistance
+        console.log("語意距離：" + distance + "***");
 
         // 世界時間***  ///20260113
         const [times, offset] = updateTime();
@@ -1220,7 +1320,6 @@ document.addEventListener("pointerup", (event) => {
         
         // 測試：統一顯示語意距離
         ///channel.subscribe
-        /*
         channel.publish('message', {
           time: (emoji_clock + ninsTimes),
           rl_text: imsg, ///("🔄" + rmsg),
@@ -1229,57 +1328,34 @@ document.addEventListener("pointerup", (event) => {
           tl_lang: tlang, ///("👄" + ilang),
           sl_lang: slang, ///("👄" + slang),
           dist: distance, ///("📏" + distance),
-        });  */
+        });
         
         
         // 顯示比對
-        ///document.getElementById("SemanticDistance").textContent = "（" + "🔄🤖🔣👄👂🆔🎯" + distance + "）";
+        ///document.getElementById("SemanticDistance").textContent = "（" + "🎯" + distance + "）";
         ///input.placeholder = "（" + "👄" + slang + ", " + "🎯" + distance + "）";
         input.setAttribute("translate", "no");
 
+        // 顯示表單***
+        // 預填網址模板
+        const baseURL = "https://docs.google.com/forms/d/e/1FAIpQLSdhEtDT6iin8qox8si8eWufXwCiDWNBjSr6AFGIQEfjoXjpIQ/viewform?usp=pp_url";
 
-        // 提示詞語
-        const lang = `${(navigator.language || navigator.userLanguage || "en-US")}. Content generation uses this language`;
-        const task = "Please tell me the meaning of this input";
-        const need = "must respond in the language specified by the lang field.";
-        const hint = "Users are advised to avoid using any unknown links";  ///Avoid using any unknown links
-
-        const bynins = `The prompt is provided by "nins.cc"`;
-        const prompt = `notice=${bynins}!\n---\nlang=${lang}.\ntask=${task}.\nneed=${need}.\nalarm=${hint}.\n---\ninput=${xmsg}.\n---\nnotice=${bynins}!`;  ///vt
-        const openai = `https://chatgpt.com/?prompt=` + encodeURIComponent( prompt );
-        const google = `https://www.google.com/search?udm=50&aep=1&aic=0&hl=${lang}&q=` + encodeURIComponent( prompt );
-        ///https://www.perplexity.ai/?q=
-        ///https://claude.ai/new?q=
-        
-        ///https://chatgate.ai/post/prompturls?utm_source=chatgpt.com
-
-        // 主要
-        const msgTime = (emoji_clock + ninsTimes);
-
-        // 顯示結構
-        const div = document.createElement("div");
-        div.innerHTML = `
-          <span id="${randomID}_T" style="color:black;" translate="no">${msgTime}</span><br>
-          <span style="color:black;">（
-          <label id="${randomID}_oa" translate="no" style="color:black;"> <a translate="no" style="text-decoration: none;" target="_blank" rel="noopener noreferrer" href="${openai}">🧠AI:O</a> </label>
-          <label id="${randomID}_gg" translate="no" style="color:black;"> <a translate="no" style="text-decoration: none;" target="_blank" rel="noopener noreferrer" href="${google}">♊AI:G</a> </label>
-          ）</span>
+        // 用模板字串生成完整 URL
+        ///const var1 = ilang;
+        ///const var2 = slang;
+        ///const var3 = rlang;
+        const var1 = tmsg;
+        const var2 = smsg;
+        const var3 = imsg;
+        const var4 = distance;
+        const var5 = uuid_user;
+        const fullURL = `${baseURL}&entry.646913966=${encodeURIComponent(var1)}&entry.108198120=${encodeURIComponent(var2)}&entry.2008598079=${encodeURIComponent(var3)}&entry.1461710493=${encodeURIComponent(var4)}&entry.2108432241=${encodeURIComponent(var5)}`;
           
-          <p id="${randomID}_2" translate="no" style="display:block; color:gray;">（ 👁️<span translate="no">${xmsg}</span> ）</p>
-          <!--div id="${randomID}_3" translate="yes" style="display:block; color:gray;">（ 👁️<div contenteditable="true" style="display: inline-block; color:gray;">
-            ${xmsg}
-          </div> ）</div!-->
-        `;
-        
-        // 添加紀錄魚標點之後
-        const anchor = document.getElementById('anchor');
-        anchor.after(div);
-        anchor.scrollIntoView({
-            behavior: "smooth", // 平滑滾動，若要瞬間跳轉則用 "auto"
-            block: "start", // 垂直對齊方式：start, center, end, 或 nearest
-            inline: "nearest" // 水平對齊方式
-        });
-        // 🔄🤖🔣👄👂🆔🎯  // 👻👁️📏♊🧠❓
+        // 綁定按鈕打開表單
+        const checkbox = document.getElementById("SkipForm");
+        if (!checkbox.checked) {
+            window.open(fullURL, "_blank", "noopener,noreferrer");
+        } 
     }
     
     
@@ -1294,7 +1370,211 @@ document.addEventListener("pointerup", (event) => {
     
     // 連線後的禁用****
     // 收到訊息時更新聊天室  
-    async function sendSocket() {   
+    async function sendSocket() {      
+        lastSentTime = Date.now();
+    
+        // 取消以下兩行
+        ///document.getElementById('InputRoom').value = document.getElementById('InputRoom').value || "WORLD";
+        ///document.getElementById('InputRoom').value = "WORLD";  // 暫時所有人都必須使用此  ///!!!
+        
+        document.getElementById('InputRoom').dispatchEvent(new Event('input')); // 手動觸發事件
+        ///document.getElementById('barcodeSlider').value = 222;
+        ///document.getElementById('barcodeSlider').dispatchEvent(new Event('input')); // 手動觸發事件
+      
+        ///const room = ("WORLD");  // ALL, BETA  ///!!!
+        const buf_room = document.getElementById('InputRoom').value.split('&&')[0];  console.log(buf_room);
+        const buf_apikey = document.getElementById('InputRoom').value.split('&&')[1];console.log(buf_apikey);
+        let room = document.getElementById('InputRoom').value.split('&&')[0] || ("WORLD");  // ALL, BETA  ///!!!
+        let apikey = document.getElementById('InputRoom').value.split('&&')[1] || ("");  // ALL, BETA  ///!!!
+        let token = params.get("token") || ("nins");  ///!!!
+
+        ///const room = room?.toLowerCase() ?? "";
+        if ( !isValid(room) ) { 
+            if (true) {
+                document.querySelector('#chatbox').classList.add('textBlinkOnce');
+                setTimeout(() => { document.querySelector('#chatbox').classList.remove('textBlinkOnce'); }, 1000);
+                console.log("if ( !isValid(room) )"); 
+                return;
+            }
+        }  ///20260116
+        document.getElementById('InputRoom').value = room;
+        room = room.toLowerCase();
+
+        if (token==="nins") {  ///20260116            
+            document.getElementById('InputRoom').disabled = true;  // 已禁用
+            document.getElementById('InputRoom').style.display = 'none';
+
+            const email = room;
+            const webpush = await channels({ "email": email });
+            adminData = JSON.parse(webpush);
+            ///adminData = webpush;  ///JSON.parse(admin)
+            console.log(webpush);
+            ///pushAdmin(null, "nins/transing", room, webpush);  
+            pushAdmin(null, "nins/transing", `${room} <<< ${uuid_user}`, adminData);  
+
+            document.getElementById('InputRoom').style.display = '';
+            document.getElementById('InputRoom').disabled = false;  // 不禁用
+
+            if (!webpush) { 
+                document.querySelector('#chatbox').classList.add('textBlinkOnce');
+                setTimeout(() => { document.querySelector('#chatbox').classList.remove('textBlinkOnce'); }, 1000);
+                console.log("if (!webpush)"); 
+                return; 
+            }
+        }
+        
+        ///document.getElementById('InputRoom').value = ("WORLD");  ///!!!
+        document.getElementById('InputRoom').disabled = true;  // 禁用
+        document.getElementById('InputRoom').style.display = 'none';
+        ///!!!
+        
+        //*document.getElementById('SelectSlang').disabled = false;  // 啟用
+        ///document.getElementById('SelectSlang').style.display = '';
+        document.getElementById('SelectTlang').disabled = false;  // 啟用
+        ///document.getElementById('SelectTlang').style.display = '';
+        //*document.getElementById('Selectilang').disabled = false;  // 啟用
+        ///document.getElementById('Selectilang').style.display = '';
+        
+        document.getElementById('chatbox').textContent = "";
+        
+        
+        
+        if (ably) {
+            ably.close(); // Close existing connection if it exists
+            ably = null;
+        }
+        if (!ably) {  ///!!!
+            ///if (apikey_user) { ably = new Ably.Realtime({ key: apikey_user, clientId: uuid_user });console.log("apikey_user"); }
+            ///if (!apikey_user) { ably = new Ably.Realtime({ key: apikey_nins, clientId: uuid_user });console.log("!apikey_user"); }
+            
+            
+            
+            if (apikey) {
+                console.log("APIKEY: ", apikey);
+                console.log("ROOM: ", room);
+                ably = new Ably.Realtime({ key: apikey, clientId: uuid_user });console.log("apikey_user");
+                
+                if (false) {
+                    apikey_user = "";
+                    room = "WORLD";  // 使用我的金鑰必須固定頻道
+                    ///room = room;  // 廣為人知後開放自訂房間
+                    // 只登入自有的令牌
+                    updateQR();
+                }
+                else {
+                    apikey_user = apikey;
+                    room = room;
+                    // 儲存令牌
+                    ///fetch('http://localhost:7860/auth', {
+                    fetch('https://duguaynins-RedirectAPI.hf.space/realtime/ably', {
+                      method: 'POST',
+                      headers: {
+                        'clientId': uuid_user,
+                        'Content-Type': 'application/json',
+                        'Beta': `APIKEY ${apikey}`,
+                        'Authorization': `Bearer ${0}`  // 或 'TOEKN your_token'
+                      },
+                      body: JSON.stringify({ /* 如果需要送其他資料，可放這裡 */ })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                      console.log('後端回應:', data);
+                      
+                      updateQR(data.token);
+                    })
+                    .catch(error => {
+                      console.error('錯誤:', error);
+                    });
+                }
+            }
+            else if (token) {
+                ///if (token === "nins") {  room = "WORLD"; document.getElementById('InputRoom').value = ("WORLD"); }
+                console.log("TOKEN: ", token);
+                console.log("ROOM: ", room);
+                ///if (!document.getElementById('SkipAds').checked) { room = document.getElementById('InputRoom').value; }
+                ///else { room = "WORLD"; document.getElementById('InputRoom').value = ("WORLD"); }
+                console.log("TOKEN: ", token);
+                console.log("ROOM: ", room);
+                updateQR(token);
+                ably = new Ably.Realtime({ authUrl: 'https://duguaynins-RedirectAPI.hf.space/realtime/ably', authMethod: 'POST', authHeaders: { 'clientId': uuid_user, 'Beta': `TOEKN ${token}`, 'Authorization': `Bearer ${0}` } });
+            }
+            
+            
+            
+        }
+        
+        // 判斷連線結果
+        if (ably) {
+        ably.connection.on((stateChange) => {
+        
+          const state = document.getElementById('stateConnection');
+          
+          console.log('Connection changed from', stateChange.previous, 'to', stateChange.current);
+        
+          switch (stateChange.current) {
+            case 'initialized':
+              console.log('📘 Initialized: SDK instance created, not yet connecting.');
+              state.textContent  = "📘（Initialized）";
+              break;
+            case 'connecting':
+              console.log('🔣 Connecting: Attempting to establish a connection.');
+              state.textContent  = "🔣（Connecting）";
+              break;
+            case 'connected':
+              console.log('✅ Connected: Successfully connected to Ably.');
+              state.textContent  = "✅（Connected）";
+
+              document.getElementById('InputRoom').disabled = true;
+              document.getElementById('InputRoom').style.display = 'none';
+              ///document.getElementById('InputRoom').placeholder = '';
+
+              document.getElementById('InputMsg').disabled = false;
+              document.getElementById('InputMsg').style.display = 'block';
+              break;
+            case 'disconnected':
+              console.log('⚠️ Disconnected: Connection is temporarily unavailable, retrying...');
+              state.textContent  = "⚠️（Disconnected）";
+
+              document.getElementById('InputRoom').disabled = true;
+              document.getElementById('InputRoom').style.display = 'none';
+              ///document.getElementById('InputRoom').placeholder = '';
+
+              document.getElementById('InputMsg').disabled = true;
+              document.getElementById('InputMsg').style.display = 'none';
+                  
+              /*
+              ably.close();  ///!!!
+              document.getElementById("InputMsg").disabled = true;
+              document.getElementById("ButtonMsg").disabled = true;
+              document.getElementById("chatbox").style.backgroundColor = '#cdcdcd';
+              ///document.getElementById("InputMsg").style.backgroundColor = '#cdcdcd';*/
+
+              break;
+            case 'suspended':
+              console.log('⛔ Suspended: Connection failed for too long. Will retry after a delay.');
+              state.textContent  = "⛔（Suspended）";
+              break;
+            case 'closing':
+              console.log('📴 Closing: Connection is being closed.');
+              state.textContent  = "📴（Closing）";
+              break;
+            case 'closed':
+              console.log('🔒 Closed: Connection has been closed.');
+              state.textContent  = "🔒（Closed）";
+              break;
+            case 'failed':
+              console.log('❌ Failed: Connection failed permanently. Manual intervention required.');
+              state.textContent  = "❌（Failed）";
+              if (stateChange.reason) {
+                console.error('Reason:', stateChange.reason.message);
+                state.textContent  = "❌（Failed＝" + stateChange.reason.message + "）";
+              }
+              break;
+            default:
+              console.log('Unknown connection state:', stateChange.current);
+          }
+        });
+        }
         
         // 特殊聲明******
         const p = document.createElement("p");
@@ -1337,12 +1617,288 @@ document.addEventListener("pointerup", (event) => {
         
         const input = document.getElementById('InputRoom');
         const button = document.getElementById('ButtonRoom');
+        ///const room = input.value;  // ALL, BETA  ///!!!
+        channel = ably.channels.get(room);  // 根據房間連線
+        input.value = room;
+              
+        // 正式進入頻道**
+        ///channel.presence.enter();
+        channel.presence.enter({
+            ///name: 'Alice',
+            ///role: 'moderator',
+            ///avatar: 'https://example.com/avatar.png',
+            ///lastActive: Date.now(),
+            ///status: 'online',
+            ///mood: 'happy',
+            ///location: 'Taipei, Taiwan',
+            webpush: Cookies.get("webpush")
+        
+        });
+        ///setTimeout(() => { pushUsers(); }, 5800);  ///20260311
 
+        ///document.getElementById('DialogAds').showModal();startSkipAdsProgress();  ///test:20251221***ads
+
+        /*
+        ///getUsers(members)
+        channel.presence.get((err, members) => {  ///20260310
+
+            const onlineUsers = members.map(m => m.clientId);
+            console.log('目前在線:', onlineUsers);
+            
+            const userData = members.map(m => m.data);
+            console.log('使用者資料:', userData);
+        
+        });  */
+
+        // 監聽**
+        channel.presence.subscribe((member) => {  ///20260311
+            console.log(member.clientId, member.action, member.data);
+            console.log("✨✨✨");
+            ///if (member.clientId === uuid_user) { pushUsers(); }
+            console.log("✨✨✨");
+        });
+        
+        ///channel.attach(() => {
+        ///channel.presence.get((err, members) => {
+        channel.presence.subscribe('enter', (member) => {
+            // 取得時間**
+            const nowUTC = new Date().toISOString();
+            const hourUTC = new Date(nowUTC).getUTCHours();  // 取得 UTC 小時（0-23）
+            const emoji_clock = EmojisClock[hourUTC];
+            const [times, offset] = updateTime();
+            const ninsTimes = times;/// + offset;
+            
+            // 紀錄事件**
+            console.log(`${member.clientId} has entered.`);
+            channel.presence.get((err, members) => {  getUsers(members);
+              const p = document.createElement('p');
+              p.innerHTML = `${emoji_clock}${ninsTimes}<br>（🟢${member.clientId || 'USER'}）`;p.style.color = 'green';
+              p.setAttribute('translate', 'no');  //???
+              ///document.getElementById("chatbox").prepend(p);
+              ///document.getElementById("chatbox").insertBefore(p, document.getElementById("anchor"));
+              ///document.getElementById('anchor').after(p);  ///20260122
+
+              ///setTimeout(() => null, 1000);  // 方便閱讀  ///20260122
+              setTimeout(() => { document.getElementById('anchor').after(p); }, 2000);  ///20260122
+
+              if (!err) { 
+                console.log('Members:', members.length);
+                ///document.getElementById("channels").innerHTML = `👻（${room}, ${members.length}）👻`; 
+
+                document.getElementById("channels").innerHTML = `👻（${room}, ${"???"}）👻`; 
+                document.getElementById("users").innerHTML = `👻（${"???"}, ${members.length}）👻`; 
+              }
+            });
+            if (member.clientId === uuid_user) {
+              setTimeout(() => { 
+              document.getElementById("InputMsg").disabled = false;
+              document.getElementById("InputMsg").style.display = ''; }, 2000);  ///20260122
+            }
+        });
+          
+        channel.presence.subscribe('leave', (member) => {
+            // 取得時間**
+            const nowUTC = new Date().toISOString();
+            const hourUTC = new Date(nowUTC).getUTCHours();  // 取得 UTC 小時（0-23）
+            const emoji_clock = EmojisClock[hourUTC];
+            const [times, offset] = updateTime();
+            const ninsTimes = times;/// + offset;
+            
+            // 紀錄事件**
+            console.log(`${member.clientId} has left.`);
+            channel.presence.get((err, members) => {  getUsers(members);
+              const p = document.createElement('p');
+              p.innerHTML = `${emoji_clock}${ninsTimes}<br>（🔴${member.clientId || 'USER'}）`;p.style.color = 'red';
+              p.setAttribute('translate', 'no');  //???
+              ///document.getElementById("chatbox").prepend(p);
+              ///document.getElementById("chatbox").insertBefore(p, document.getElementById("anchor"));
+              ///document.getElementById('anchor').after(p);  ///20260122
+
+              ///setTimeout(() => null, 1000);  // 方便閱讀  ///20260122
+              setTimeout(() => { document.getElementById('anchor').after(p); }, 1);  ///20260122
+
+              if (!err) { 
+                console.log('Members:', members.length);
+                ///document.getElementById("channels").innerHTML = `👻（${room}, ${members.length}）👻`; 
+
+                document.getElementById("channels").innerHTML = `👻（${room}, ${"???"}）👻`; 
+                document.getElementById("users").innerHTML = `👻（${"???"}, ${members.length}）👻`; 
+              }
+            });
+            if (member.clientId === uuid_user) {
+              setTimeout(() => { 
+              document.getElementById("InputMsg").disabled = true;
+              document.getElementById("InputMsg").style.display = 'none'; }, 1);  ///20260122
+            }
+        });
+        
+        
+        
+        // 立即註冊訂閱監聽
+        ///channel.publish
+        channel.subscribe('message', function(msg) {
+          console.log("接收到的訊息:", msg);
+          
+          // 紀錄文字用的元素***
+          const box = document.getElementById('chatbox');
+          const p = document.createElement('p');
+          ///p.textContent = msg.data;
+
+          // 初始化**
+          const obj = msg.data;
+          // 取得語言代號**
+          const msgtLangs = obj.sl_lang;
+          const msgtLangm = obj.tl_lang;  // 一起學習的語言
+          const msgtLangr = "en";
+          console.log("👄sl:", msgtLangs);
+          console.log("👄il:", msgtLangm);
+          console.log("👄rl:", msgtLangr);
+          // 取得原文語言**
+          const msgtTexts = obj.sl_text;  ///smsg
+          console.log("🔣sl", msgtTexts);
+          // 取得中間語言**
+          const msgtTextm = obj.il_text;  ///imsg
+          console.log("🔄il", msgtTextm);
+          // 取得學習語言**  // 顯示語言？結果語言？
+          const msgtTextr = obj.rl_text;  ///rmsg
+          console.log("🤖rl", msgtTextr);
+          // 取得時間**
+          const msgTime = obj.time;
+          console.log("🕛tm", msgTime);
+          // 取得距離**
+          const msgDist = obj.dist;  ///distance
+          console.log("📏ds", msgDist);  ///🎯
+
+          
+          // 顯示結果***
+          ///const result = (index !== -1) ? msg.data.substring(0, index) : msg.data;
+          // 加入文字轉語音按鈕TTS**
+          const randomID = "id_" + Math.random().toString(36).substring(2, 8);  // 產生短隨機 ID
+          const functionName = `handleTTS_${randomID}`;  // 定義專屬函式名稱
+          
+          
+          // 用模板字串生成完整 URL**
+          const baseURL = "https://docs.google.com/forms/d/e/1FAIpQLSdhEtDT6iin8qox8si8eWufXwCiDWNBjSr6AFGIQEfjoXjpIQ/viewform?usp=pp_url";
+          const var1 = msgtTextm;
+          const var2 = msgtTexts;
+          const var3 = msgtTextr;
+          const var4 = msgDist;
+          const var5 = uuid_user;
+          const fullURL = `${baseURL}&entry.646913966=${encodeURIComponent(var1)}&entry.108198120=${encodeURIComponent(var2)}&entry.2008598079=${encodeURIComponent(var3)}&entry.1461710493=${encodeURIComponent(var4)}&entry.2108432241=${encodeURIComponent(var5)}`;
+
+          // 提示詞語
+          const lang = `${(navigator.language || navigator.userLanguage || "en-US")}. Content generation uses this language`;
+          const task = "Please tell me the meaning of this input";
+          const need = "must respond in the language specified by the lang field.";
+          const hint = "Users are advised to avoid using any unknown links";  ///Avoid using any unknown links
+
+          const bynins = `The prompt is provided by "nins.cc"`;
+          const prompt = `notice=${bynins}!\n---\nlang=${lang}.\ntask=${task}.\nneed=${need}.\nalarm=${hint}.\n---\ninput=${msgtTexts}.\n---\nnotice=${bynins}!`;  ///vt
+          const openai = `https://chatgpt.com/?prompt=` + encodeURIComponent( prompt );
+          const google = `https://www.google.com/search?udm=50&aep=1&aic=0&hl=${lang}&q=` + encodeURIComponent( prompt );
+
+          // 綁定按鈕打開表單
+          const checkbox = document.getElementById("SkipForm");
+          if (!checkbox.checked) {
+              ///window.open(fullURL, "_blank", "noopener,noreferrer");
+              ///window.open('${fullURL}', '_blank', 'noopener,noreferrer');
+          } 
+          
+          // 記錄所有可能使用的表情 EMOJI：👁️🔄🤖👻🎯📏🟢🔴⛔
+
+          // 使用模板字串，插入 randomID 到 HTML 字串中**
+          ///const p = document.createElement('p');  // 棄用此行
+          const div = document.createElement("div");
+          div.id = `${randomID}`;
+          div.innerHTML = `
+            <span id="${randomID}_T" style="color:black;" translate="no">${msgTime}</span><br>
+            <span id="${randomID}_ctrl" style="color:black;">（
+                <label id="${randomID}_sl" translate="no" style="color:black;">👂sl:${msgtLangs}<input style="display:none;" type="button" value="👂${msgtLangs}" onclick="handleTTS('${randomID}_0')" /></label>
+                <label id="${randomID}_tl" translate="no" style="color:black;">👂tl:${msgtLangm}<input style="display:none;" type="button" value="👂${msgtLangm}" onclick="handleTTS('${randomID}_1')" /></label>
+                <label id="${randomID}_il" translate="no" style="color:black;">👂il:${msgtLangr}<input style="display:none;" type="button" value="👂${msgtLangr}" onclick="handleTTS('${randomID}_9')" /></label>
+                <label id="${randomID}_oa" translate="no" style="color:black;"> <a translate="no" style="text-decoration: none;" target="_blank" rel="noopener noreferrer" href="${openai}">🧠AI:O</a> </label>
+                <label id="${randomID}_gg" translate="no" style="color:black;"> <a translate="no" style="text-decoration: none;" target="_blank" rel="noopener noreferrer" href="${google}">♊AI:G</a> </label>
+            ）</span>
+            
+            <p id="${randomID}_2" translate="no" style="display:block; color:gray;">（ 👁️<span translate="yes">${msgtTextr}</span> ）</p>
+            <p id="${randomID}_0" translate="no" style="display:none; color:gray;">（ 🔣<span translate="no">${msgtTexts}</span>👄${msgtLangs} ）</p>
+            <p id="${randomID}_1" translate="no" style="display:none; color:gray;">（ 🤖<span translate="no">${msgtTextm}</span>👄${msgtLangm} ）</p>
+            <p id="${randomID}_9" translate="no" style="display:none; color:gray;">（ 👻<span translate="no">${msgtTextr}</span>👄${msgtLangr} ）</p>
+
+            <p id="${randomID}_ds" translate="no" style="color:gray;" onclick="autoDS('${randomID}');" >（
+                🎯${msgDist}📏ds:${msgtLangr}&${msgtLangs}
+            ）</p>
+          `;
+          
+          // 添加紀錄
+          const anchor = document.getElementById('anchor');
+          ///document.getElementById("chatbox").appendChild(p);  // 取消CCS時，改用此。
+          ///document.getElementById("chatbox").prepend(div); // 加在最上層，但因為 column-reverse 是「視覺底部」。
+          ///document.getElementById("chatbox").insertBefore(div, anchor);
+          document.getElementById('anchor').after(div);
+
+          // 滾動紀錄
+          ///box.scrollTop = box.scrollHeight; 
+          ///autoScroll();
+
+          // 取得 select 元素
+          var Playxlang = document.getElementById("Playxlang").value;
+
+          // 讀取選取的文字
+          ///var text = select.options[select.selectedIndex].text;
+          if (Playxlang === "3") { document.getElementById(`${randomID}_sl`).click(); }
+          if (Playxlang === "2") { document.getElementById(`${randomID}_tl`).click(); }
+          if (Playxlang === "1") { document.getElementById(`${randomID}_il`).click(); }
+          if (Playxlang === "0") {  }
+
+          if (Playxlang === "") {  document.getElementById(`${randomID}_tl`).click(); 
+                                   document.getElementById("Playxlang").value = "2";  }
+          
+        });
+        
+        
+        // 第一次加入聊天室時***  // 已經顯示加入訊息，所以不需要這個了
+        ///document.getElementById("InputMsg").value = "I joined the " + room + " channel.";
+        ///document.getElementById("ButtonMsg").click();
         document.getElementById("InputMsg").focus();
-        document.getElementById('InputMsg').disabled = false;  // 啟用
-        document.getElementById('InputMsg').style.display = '';
         ///box.scrollTop = box.scrollHeight; 
         autoScroll();
+    }
+
+    async function autoDS(id="") {
+
+        ///const baseURL = "https://docs.google.com/forms/d/e/1FAIpQLSdhEtDT6iin8qox8si8eWufXwCiDWNBjSr6AFGIQEfjoXjpIQ/viewform?usp=pp_url";
+
+        const var_time = document.getElementById(`${id}_T`).innerText;
+        const var_ctrl = document.getElementById(`${id}_ctrl`).innerText;
+        
+        const var_2 = document.getElementById(`${id}_2`).textContent;  ///rl
+        const var_0 = document.getElementById(`${id}_0`).textContent;  ///sl
+        const var_1 = document.getElementById(`${id}_1`).textContent;  ///tl
+        const var_9 = document.getElementById(`${id}_9`).textContent;  ///il
+
+        const var_ds = document.getElementById(`${id}_ds`).innerText;
+        
+        const var_rl = document.getElementById(`${id}_2`).children[0].textContent;  ///rl
+        const var_sl = document.getElementById(`${id}_0`).children[0].textContent;  ///sl
+        const var_tl = document.getElementById(`${id}_1`).children[0].textContent;  ///tl
+        const var_il = document.getElementById(`${id}_9`).children[0].textContent;  ///il
+
+        const var_uuid = uuid_user;
+        const var_test = document.getElementById(`${id}`).innerText;
+
+        const inputs = `${var_time}\n${var_ctrl}\n${var_2}\n${var_0}\n${var_1}\n${var_9}\n${var_ds}\n`;  ///${var_uuid}
+        ///const fullURL = `${baseURL}&entry.646913966=${encodeURIComponent(var0)}&entry.108198120=${encodeURIComponent(var2)}&entry.2008598079=${encodeURIComponent(var3)}&entry.1461710493=${encodeURIComponent(var4)}&entry.2108432241=${encodeURIComponent(var5)}`;
+        
+        const sl_tl = await semantic({ "a": var_sl, "b": var_tl }); // duguaynins/SemanticDistance
+        console.log("sl_tl: " + sl_tl + "***");
+
+        const sl_rl = await semantic({ "a": var_sl, "b": var_rl }); // duguaynins/SemanticDistance
+        console.log("sl_rl: " + sl_rl + "***");
+        
+        const dsurl = `https://docs.google.com/forms/d/e/1FAIpQLSdcnkEbj_B7RjfNZIoyZ3XvFXJ8q0MAHFQY0ncQ4vQ-sHbKFQ/viewform?usp=pp_url&entry.108198120=${encodeURIComponent(inputs)}&entry.2008598079=${encodeURIComponent(sl_tl)}&entry.646913966=${encodeURIComponent(sl_rl)}`;
+        window.open(`${dsurl}`, '_blank', 'noopener,noreferrer');
+
     }
 
     function autoScroll() {
@@ -1890,15 +2446,6 @@ document.addEventListener("pointerup", (event) => {
             payload: inputs,
         }); 
       }
-
-    </script>
-    <script>
-    const trees = document.querySelectorAll('.tree');
-
-    trees.forEach(tree => {
-      const id = tree.dataset.treeId; // 直接拿到 "001"
-      console.log(`正在處理編號為 ${id} 的樹...`);
-    });
     </script>
 </body>
 </html>
