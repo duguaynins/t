@@ -1870,7 +1870,7 @@ document.addEventListener("pointerup", (event) => {
         
         const var_time = document.getElementById(`${id}_T`).innerText;
         const var_ctrl = document.getElementById(`${id}_ctrl`).textContent.replace(/\s+/g, "");  ///.replace(/\s+/g, "");
-        const var_text = document.getElementById(`${id}_text`).textContent.replace(/ /g, "");  ///.replace(/ /g, "");
+        const var_text = document.getElementById(`${id}_text`).textContent.replace(/  /g, "");  ///.replace(/ /g, "");
         const var_ds = document.getElementById(`${id}_ds`).textContent.replace(/\s+/g, "");
         
         const var_rl = document.getElementById(`${id}_2`).children[0].textContent;  ///rl
@@ -1879,9 +1879,10 @@ document.addEventListener("pointerup", (event) => {
         const var_il = document.getElementById(`${id}_9`).children[0].textContent;  ///il
 
         const var_uuid = uuid_user;
-        const var_test = document.getElementById(`${id}`).textContent.replace(/\s+/g, "").replace(/（/g, "\n（");
+        const var_test = document.getElementById(`${id}`).textContent.replace(/\s{2,}/g, "").replace(/（/g, "\n（");
 
         const xl_xl = `{\n${var_test}\n🕛...\n}`;  ///${var_uuid}
+        ///const xl_xl = `{\n${var_time}\n${var_ctrl}\n${var_text}\n${var_ds}\n🕛...\n}`;  ///${var_uuid}
         const sl_tl = await semantic({ "a": var_sl, "b": var_tl }); // duguaynins/SemanticDistance
         const sl_rl = await semantic({ "a": var_sl, "b": var_rl }); // duguaynins/SemanticDistance
         const sl_il = await semantic({ "a": var_sl, "b": var_il }); // duguaynins/SemanticDistance
