@@ -1887,7 +1887,7 @@ document.addEventListener("pointerup", (event) => {
         const var_uuid = uuid_user;
         const var_test = document.getElementById(`${id}`).innerText;
 
-        const inputs = `${var_time}\n${var_ctrl}\n${var_2}\n${var_0}\n${var_1}\n${var_9}\n${var_ds}\n`;  ///${var_uuid}
+        const xl_xl = `${var_time}\n${var_ctrl}\n${var_2}\n${var_0}\n${var_1}\n${var_9}\n${var_ds}\n`;  ///${var_uuid}
         ///const fullURL = `${baseURL}&entry.646913966=${encodeURIComponent(var0)}&entry.108198120=${encodeURIComponent(var2)}&entry.2008598079=${encodeURIComponent(var3)}&entry.1461710493=${encodeURIComponent(var4)}&entry.2108432241=${encodeURIComponent(var5)}`;
         
         const sl_tl = await semantic({ "a": var_sl, "b": var_tl }); // duguaynins/SemanticDistance
@@ -1895,8 +1895,15 @@ document.addEventListener("pointerup", (event) => {
 
         const sl_rl = await semantic({ "a": var_sl, "b": var_rl }); // duguaynins/SemanticDistance
         console.log("sl_rl: " + sl_rl + "***");
+
+        const sl_il = await semantic({ "a": var_sl, "b": var_il }); // duguaynins/SemanticDistance
+        console.log("sl_rl: " + sl_il + "***");
+
+        const il_rl = await semantic({ "a": var_il, "b": var_rl }); // duguaynins/SemanticDistance
+        console.log("sl_rl: " + il_rl + "***");
         
-        const dsurl = `https://docs.google.com/forms/d/e/1FAIpQLSdcnkEbj_B7RjfNZIoyZ3XvFXJ8q0MAHFQY0ncQ4vQ-sHbKFQ/viewform?usp=pp_url&entry.108198120=${encodeURIComponent(inputs)}&entry.2008598079=${encodeURIComponent(sl_tl)}&entry.646913966=${encodeURIComponent(sl_rl)}`;
+        ///https://docs.google.com/forms/d/e/1FAIpQLSdcnkEbj_B7RjfNZIoyZ3XvFXJ8q0MAHFQY0ncQ4vQ-sHbKFQ/viewform?usp=pp_url&entry.108198120=1&entry.2008598079=2&entry.646913966=3&entry.1456046338=4&entry.1774670439=5
+        const dsurl = `https://docs.google.com/forms/d/e/1FAIpQLSdcnkEbj_B7RjfNZIoyZ3XvFXJ8q0MAHFQY0ncQ4vQ-sHbKFQ/viewform?usp=pp_url&entry.108198120=${encodeURIComponent(xl_xl)}&entry.2008598079=${encodeURIComponent(sl_tl)}&entry.646913966=${encodeURIComponent(sl_rl)}&entry.1456046338=${encodeURIComponent(sl_il)}&entry.1774670439=${encodeURIComponent(il_rl)}`;
         window.open(`${dsurl}`, '_blank', 'noopener,noreferrer');
 
     }
