@@ -95,7 +95,8 @@
           
 <!-- 放置你原有的布局 -->
 <button type="button" class="main use fat" onclick="document.getElementById('input_qr').click();">🖼️<p translate="no" style="margin: 0; padding: 0; font-size: 1vh;" class="label">image</p></button>
-<input type="file" id="input_qr" style="display: none;" accept="image/*">
+<!--input type="file" id="input_qr" style="display: none;" accept="image/*"!-->
+<input type="file" id="input_qr" style="display: none;" accept="image/*" capture="environment">
 <canvas id="canvas_qr" style="display:none;"></canvas>
 
 <div id="content" style="background: #CCCCCC; overflow:auto; width:100%; flex:1; border: 1px solid #ccc; color: black;">
