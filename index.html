@@ -462,7 +462,10 @@ async function send() {
 `;
   const gpt_4o_mini_MQM = await MQM({ "system": source, "user": notags, "models": 'gpt-4o-mini', "intermediate": document.getElementById("intermediate").innerText });
   console.log(gpt_4o_mini_MQM);
-  document.getElementById("scores").innerText += "\n";
+  const mqm = JSON.parse(gpt_4o_mini_MQM);
+  downloadJSON(mqm, il);
+  
+  document.getElementById("scores").innerText += "\n"+gpt_4o_mini_MQM;
 }
 
 
