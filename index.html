@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -280,7 +281,7 @@ async function HuggingFaceAPI(inputs=null) {
 }
 
 async function generate(params) {  
-  console.log('翻譯文本:', params);
+  ///console.log('翻譯文本:', params);
   ///const system = document.getElementById("input_sys").value;
   ///const message = document.getElementById("input_msg").value;
 
@@ -305,7 +306,7 @@ async function generate(params) {
 }
 
 async function MQM(params) { 
-  console.log('頻道確認:', params);
+  ///console.log('頻道確認:', params);
   const { system, user, models, intermediate } = params;
   if (!models) { return; }
   if (!user) { return "usr?"; }
@@ -325,7 +326,7 @@ async function MQM(params) {
 }
 
 async function rewrite(params) { 
-  console.log('頻道確認:', params);
+  ///console.log('頻道確認:', params);
   const { system, user, models } = params;
   if (!models) { return; }
   if (!user) { return "usr?"; }
@@ -429,7 +430,7 @@ async function send() {
   const gpt_4o_mini_rewrite = await rewrite({ "system": strings, "user": usr, "models": 'gpt-4o-mini' });
   log("🤖　" + gpt_4o_mini_rewrite );
   const data = JSON.parse(gpt_4o_mini_rewrite);
-  downloadJSON(data, usr);
+  ///downloadJSON(data, usr);
   const il = data[intermediate];
   const il_pro = data[intermediate+tag];  ///2 3
   const sl = data[source];
@@ -462,10 +463,22 @@ async function send() {
 `;
   const gpt_4o_mini_MQM = await MQM({ "system": source, "user": notags, "models": 'gpt-4o-mini', "intermediate": document.getElementById("intermediate").innerText });
   console.log(gpt_4o_mini_MQM);
-  const mqm = JSON.parse(gpt_4o_mini_MQM);
-  downloadJSON(mqm, il);
+  ///const mqm = gpt_4o_mini_MQM;
+  const mqm = JSON.parse(gpt_4o_mini_MQM);  ///字串轉物件
+  ///downloadJSON(mqm, notags);  ///il
   
-  document.getElementById("scores").innerText += "\n"+gpt_4o_mini_MQM;
+  document.getElementById("scores").innerText += "\n";
+  ///document.getElementById("scores").innerText += JSON.stringify(mqm);  ///物件轉字串
+  ///document.getElementById("scores").innerText += `{"score":${mqm["MQM"]["translation_evaluation_score_percentage"]},"details":${mqm["MQM"]["translation_evaluation_MQM_error_details"]}}`;
+  
+  document.getElementById("scores").innerText += JSON.stringify(mqm["MQM"]);  ///物件轉字串
+
+  const C = {
+    translation_inputs: usr,
+    translation_rewrite: data,
+    translation_evaluate: mqm,
+  };
+  downloadJSON(C);
 }
 
 
@@ -481,7 +494,7 @@ document.getElementById("input_msg").addEventListener("keydown", function(e) {
 <!-- LOG ================================================== -->
 <script type="text/javascript">  // dialog.js
 function downloadJSON(data, inputs=""){
-  data["inputs"] = inputs;
+  ///data["inputs"] = inputs;
   const blob = new Blob(
     [JSON.stringify(data, null, 2)],
     { type: "application/json" }
