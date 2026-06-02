@@ -22,11 +22,11 @@
 
 <style>
 button,
-input,
 #slider-day,
 #slider-week{
     display:block;
 }
+input,
 .test,
 dialog,
 #title,
@@ -100,8 +100,11 @@ dialog,
 
 
     <div id="content" onclick="" style="flex:1; display: flex; flex-direction: column; justify-content: center; align-items: center;" class="content center use" translate="no">
-        <strong><span id="utc-time" style="font-size: 5vw;"></span></strong>
-        <h1><span id="utc-offset" style="font-size: 15vw;"></span></h1>
+        <strong style="font-size: 3vw;"><span id="utc-time"></span></strong>
+        <h1 style="font-size: 15vw;"><span id="utc-offset"></span></h1>
+        <strong style="font-size: 1.5vw;"><span id="utc-bg"></span><span>(T)</span><span id="utc-ct"></span><span>(Z)</span></strong>
+        <strong></strong>
+        <strong style="font-size: 1.5vw;"><span id="utc-re"></span></strong>
     </div>
 
 
@@ -361,6 +364,9 @@ function update(testweek=null, testday=null) {
   bg = `hsla(${hue}, ${saturation}%, ${lightness}%, 1.0)`;   /* 色相  鮮豔度  亮度 */  ///20260120
   ct = `hsl(${hue}, ${0}%, ${Math.floor( (1-dayProgress) *100 )}%)`;  ///黑色
   
+  document.getElementById("utc-bg").innerHTML = bg;
+  document.getElementById("utc-ct").innerHTML = ct;
+  document.getElementById("utc-re").innerHTML = [weekProgress, dayProgress];
   ///console.log(daysIndex);
   ///console.log(dayProgress);
   ///console.log(ct);
