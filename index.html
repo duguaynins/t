@@ -55,6 +55,11 @@ dialog,
   cursor: default;
   /*background: linear-gradient(white, transparent);*/
   background: white;
+  
+  height: 100vh;            /* 鎖定高度為手機螢幕的 100% */
+  max-height: 100vh;        /* 防止被撐開 */
+  box-sizing: border-box;   /* 確保 padding 不會額外增加高度 */
+  overflow: hidden;         /* 萬一有元件溢出，直接隱藏，不產生捲軸 */
 ">
 
   
