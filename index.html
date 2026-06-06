@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>nins / cocolors.sys</title>
+<title>stable flow</title>
 
 <style>
 body{
     margin:0;
-    height:100vh;
     overflow:hidden;
     background:#111827;
 }
@@ -16,88 +15,84 @@ canvas{
     display:block;
     width:100vw;
     height:100vh;
-    cursor:pointer;
 }
 </style>
 </head>
 
 <body>
-
 <canvas id="c"></canvas>
 
 <script>
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
-// ===== resize (支援 retina) =====
-function resize() {
-    const dpr = devicePixelRatio || 1;
+let w, h, dpr;
 
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
+function resize(){
+    dpr = window.devicePixelRatio || 1;
+    w = window.innerWidth;
+    h = window.innerHeight;
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+
+    ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 resize();
 window.addEventListener("resize", resize);
 
-// ===== random color =====
-function randomColor() {
-    const hue = Math.floor(Math.random() * 360);
-    return `hsl(${hue}, 85%, 60%)`;
+// 🌈 色彩函數（不爆白關鍵）
+function hsla(h, a){
+    return `hsla(${h}, 85%, 60%, ${a})`;
 }
 
-// ===== draw =====
-function draw() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+function draw(t){
 
-    const c1 = randomColor();
-    const c2 = randomColor();
-    const c3 = randomColor();
-    const c4 = randomColor();
-    const c5 = randomColor();
+    const time = t * 0.001;
 
-    ctx.clearRect(0, 0, w, h);
+    // 🌫 關鍵：衰減（避免累積爆白）
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = "rgba(17, 24, 39, 0.18)";
+    ctx.fillRect(0,0,w,h);
 
-    function blob(x, y, color, radius) {
-        const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
-        g.addColorStop(0, color);
+    // 🌊 光混合模式
+    ctx.globalCompositeOperation = "lighter";
+
+    // 🌬 控制強度（避免飽和）
+    const breath = 0.6 + Math.sin(time * 0.8) * 0.25;
+
+    const baseHue = time * 30;
+
+    for(let i=0;i<12;i++){
+
+        const angle = time * 0.4 + i * 0.6;
+
+        const radius = (Math.min(w,h) * 0.22) * (1 + Math.sin(time*0.6 + i)*0.3);
+
+        const x = w/2 + Math.cos(angle + i) * radius;
+        const y = h/2 + Math.sin(angle * 1.3 + i) * radius;
+
+        const hue = (baseHue + i*15) % 360;
+
+        const size = Math.min(w,h) * 0.35;
+
+        const g = ctx.createRadialGradient(x,y,0,x,y,size);
+
+        // 🌊 限制 alpha（關鍵避免全白）
+        g.addColorStop(0, hsla(hue, 0.18 * breath));
         g.addColorStop(1, "transparent");
 
         ctx.fillStyle = g;
-        ctx.fillRect(0, 0, w, h);
+        ctx.fillRect(0,0,w,h);
     }
 
-    blob(w * 0.2, h * 0.2, c1, w * 0.7);
-    blob(w * 0.8, h * 0.2, c2, w * 0.7);
-    blob(w * 0.3, h * 0.8, c3, w * 0.7);
-    blob(w * 0.8, h * 0.8, c4, w * 0.7);
-    blob(w * 0.5, h * 0.5, c5, w * 0.9);
+    requestAnimationFrame(draw);
 }
 
-// ===== download (純 Canvas) =====
-function download() {
-    const link = document.createElement("a");
-    /*
-    const timestamp = new Date()
-        .toISOString()
-        .replace(/[:.]/g, "-"); */
-    const timestamp = Date.now();
-    link.download = `nins-cocolors-${timestamp}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-}
-
-// ===== init =====
-draw();
-
-// 單次點擊：重新生成 + 下載 + 停止監聽
-document.addEventListener("click", () => {
-    ///draw();
-    download();
-}, { once: true });
-
+requestAnimationFrame(draw);
 </script>
 
 </body>
