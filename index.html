@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,16 +11,55 @@ body{
     overflow:hidden;
     background:#111827;
 }
+
 canvas{
     display:block;
     width:100vw;
     height:100vh;
 }
+
+/* 全螢幕轉場 */
+#flash{
+    position:fixed;
+    inset:0;
+    background:transparent;
+    z-index:9999;
+    pointer-events:none;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    transition:
+        background-color 1.2s ease,
+        opacity 1s ease;
+}
+
+#secret{
+    font-family:monospace;
+    font-size:clamp(18px,2vw,28px);
+    letter-spacing:2px;
+
+    color:#000;
+    opacity:0;
+
+    transition:
+        color 1s ease,
+        opacity 1s ease,
+        transform 1s ease;
+
+    transform:translateY(10px);
+}
 </style>
 </head>
 
 <body>
+
 <canvas id="c"></canvas>
+
+<div id="flash">
+    <div id="secret"></div>
+</div>
 
 <script>
 const canvas = document.getElementById("c");
@@ -44,46 +83,49 @@ function resize(){
 resize();
 window.addEventListener("resize", resize);
 
-// 🌈 色彩函數（不爆白關鍵）
-function hsla(h, a){
-    return `hsla(${h}, 85%, 60%, ${a})`;
+function hsla(h,a){
+    return `hsla(${h},85%,60%,${a})`;
 }
 
 function draw(t){
 
     const time = t * 0.001;
 
-    // 🌫 關鍵：衰減（避免累積爆白）
     ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = "rgba(17, 24, 39, 0.18)";
+    ctx.fillStyle = "rgba(17,24,39,0.18)";
     ctx.fillRect(0,0,w,h);
 
-    // 🌊 光混合模式
     ctx.globalCompositeOperation = "lighter";
 
-    // 🌬 控制強度（避免飽和）
     const breath = 0.6 + Math.sin(time * 0.8) * 0.25;
-
     const baseHue = time * 30;
 
     for(let i=0;i<12;i++){
 
         const angle = time * 0.4 + i * 0.6;
 
-        const radius = (Math.min(w,h) * 0.22) * (1 + Math.sin(time*0.6 + i)*0.3);
+        const radius =
+            (Math.min(w,h) * 0.22) *
+            (1 + Math.sin(time*0.6 + i)*0.3);
 
-        const x = w/2 + Math.cos(angle + i) * radius;
-        const y = h/2 + Math.sin(angle * 1.3 + i) * radius;
+        const x =
+            w/2 + Math.cos(angle + i) * radius;
+
+        const y =
+            h/2 + Math.sin(angle * 1.3 + i) * radius;
 
         const hue = (baseHue + i*15) % 360;
 
         const size = Math.min(w,h) * 0.35;
 
-        const g = ctx.createRadialGradient(x,y,0,x,y,size);
+        const g =
+            ctx.createRadialGradient(
+                x,y,0,
+                x,y,size
+            );
 
-        // 🌊 限制 alpha（關鍵避免全白）
-        g.addColorStop(0, hsla(hue, 0.18 * breath));
-        g.addColorStop(1, "transparent");
+        g.addColorStop(0, hsla(hue,0.18 * breath));
+        g.addColorStop(1,"transparent");
 
         ctx.fillStyle = g;
         ctx.fillRect(0,0,w,h);
@@ -93,39 +135,99 @@ function draw(t){
 }
 
 requestAnimationFrame(draw);
+
+/* -------------------------- */
+
+function wait(ms){
+    return new Promise(r => setTimeout(r, ms));
+}
+
 document.addEventListener(
-  "click",
-  () => {
-    let offset = -new Date().getTimezoneOffset();
-    let utc = new Date().toISOString();
-    let details = `${utc}${offset}/60`;
-        
-    let dates = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-    let year = dates.slice(0, 4);
-    let ctz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    "click",
+    async () => {
 
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const location = `${pos.coords.latitude},${pos.coords.longitude}`;
+        let offset = -new Date().getTimezoneOffset();
+        const hours = Math.trunc(offset / 60);
+        const minutes = Math.abs(offset % 60);
+        const sign = hours >= 0 ? "+" : "-";
+        const tz =
+    `${sign}` +
+    `${String(Math.abs(hours)).padStart(2,"0")}:` +
+    `${String(minutes).padStart(2,"0")}`;
+        let utc = new Date().toISOString();
+        let details = `${utc}${tz}`;
+        ///let details = `${utc}${offset}/60`;
 
-      const url = [
-        "https://www.google.com/calendar/render?",
-        "action=TEMPLATE",
-        `&text=${year}#${ctz}`,
-        `&dates=${dates}/${dates}`,
-        `&ctz=${ctz}`,
-        `&location=${encodeURIComponent(location)}`,
-        "&trp=true",
-        "&recur=",
-        "&add=",
-        `&details=${encodeURIComponent(details)}`,
-        "&source=",
-        "&sprop="
-      ].join("");
+        const flash = document.getElementById("flash");
+        const secret = document.getElementById("secret");
 
-      window.location.href = url;
-    });
-  },
-  { once: true }
+        /* 1. 全黑 */
+
+        flash.style.backgroundColor = "#000";
+
+        /* 2. 偷偷顯示黑字 */
+
+        secret.textContent = details;
+        secret.style.color = "#000";
+        secret.style.opacity = "1";
+        ///secret.style.transform = "translateY(0)";
+
+        await wait(1500);
+
+        /* 3. 切成全白 */
+
+        flash.style.backgroundColor = "#fff";
+
+        await wait(600);
+
+        /* 4. 白底浮現文字 */
+
+        secret.style.color = "#111";
+        secret.style.opacity = "1";
+
+        await wait(1500);
+
+        /* 5. 建立 Calendar URL */
+
+        let dates =
+            new Date()
+            .toISOString()
+            .replace(/[-:]/g,"")
+            .split(".")[0] + "Z";
+
+        let year = dates.slice(0,4);
+
+        let ctz =
+            Intl.DateTimeFormat()
+            .resolvedOptions()
+            .timeZone;
+
+        navigator.geolocation.getCurrentPosition((pos)=>{
+
+            const location =
+                `${pos.coords.latitude},${pos.coords.longitude}`;
+
+            const url = [
+                "https://www.google.com/calendar/render?",
+                "action=TEMPLATE",
+                `&text=${year}#${ctz}`,
+                `&dates=${dates}/${dates}`,
+                `&ctz=${ctz}`,
+                `&location=${encodeURIComponent(location)}`,
+                "&trp=true",
+                "&recur=",
+                "&add=",
+                `&details=${encodeURIComponent(details)}`,
+                "&source=",
+                "&sprop="
+            ].join("");
+
+            window.location.href = url;
+
+        });
+
+    },
+    { once:true }
 );
 </script>
 
