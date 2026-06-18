@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>stable flow</title>
+<title>nins / date.sys</title>
 
 <style>
 body{
@@ -93,6 +93,36 @@ function draw(t){
 }
 
 requestAnimationFrame(draw);
+document.addEventListener(
+  "click",
+  () => {
+    let dates = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+    let year = dates.slice(0, 4);
+    let ctz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const location = `${pos.coords.latitude},${pos.coords.longitude}`;
+
+      const url = [
+        "https://www.google.com/calendar/render?",
+        "action=TEMPLATE",
+        `&text=${year}`,
+        `&dates=${dates}/${dates}`,
+        `&ctz=${ctz}`,
+        `&location=${encodeURIComponent(location)}`,
+        "&trp=true",
+        "&recur=",
+        "&add=",
+        "&details=",
+        "&source=",
+        "&sprop="
+      ].join("");
+
+      window.location.href = url;
+    });
+  },
+  { once: true }
+);
 </script>
 
 </body>
