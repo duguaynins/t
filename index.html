@@ -106,7 +106,7 @@ document.addEventListener(
       const url = [
         "https://www.google.com/calendar/render?",
         "action=TEMPLATE",
-        `&text=${year}`,
+        `&text=${year}#${ctz}`,
         `&dates=${dates}/${dates}`,
         `&ctz=${ctz}`,
         `&location=${encodeURIComponent(location)}`,
