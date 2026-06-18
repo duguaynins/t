@@ -189,18 +189,9 @@ document.addEventListener(
 
         /* 5. 建立 Calendar URL */
 
-        let dates =
-            new Date()
-            .toISOString()
-            .replace(/[-:]/g,"")
-            .split(".")[0] + "Z";
-
-        let year = dates.slice(0,4);
-
-        let ctz =
-            Intl.DateTimeFormat()
-            .resolvedOptions()
-            .timeZone;
+        let dates = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+        let year = dates.slice(0, 4);
+        let ctz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
         navigator.geolocation.getCurrentPosition((pos)=>{
 
@@ -210,7 +201,7 @@ document.addEventListener(
             const url = [
                 "https://www.google.com/calendar/render?",
                 "action=TEMPLATE",
-                `&text=${year}#${ctz}`,
+                `&text=${year}-${ctz}`,
                 `&dates=${dates}/${dates}`,
                 `&ctz=${ctz}`,
                 `&location=${encodeURIComponent(location)}`,
