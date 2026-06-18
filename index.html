@@ -96,6 +96,10 @@ requestAnimationFrame(draw);
 document.addEventListener(
   "click",
   () => {
+    let offset = -new Date().getTimezoneOffset();
+    let utc = new Date().toISOString();
+    let details = `${utc}${offset}/60`;
+        
     let dates = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
     let year = dates.slice(0, 4);
     let ctz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -113,7 +117,7 @@ document.addEventListener(
         "&trp=true",
         "&recur=",
         "&add=",
-        "&details=",
+        `&details=${encodeURIComponent(details)}`,
         "&source=",
         "&sprop="
       ].join("");
