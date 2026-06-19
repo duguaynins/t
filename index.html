@@ -176,7 +176,71 @@
     const decodeView = document.getElementById('decodeView');
   </script>
   <script>
+    
     function downloadPNG(canvas) {
+      // 1. 設定你想固定的最終輸出像素大小（例如 800 x 450）
+      const targetWidth = 800;
+      const targetHeight = 450;
+
+      // 2. 建立一個隱藏的虛擬 Canvas 作為畫布
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = targetWidth;
+      exportCanvas.height = targetHeight;
+      const ctx = exportCanvas.getContext('2d');
+
+      // 3. 取得目前使用者設定的背景顏色，並填滿整個畫布
+      const bgColor = document.getElementById('code-bgcolor').value || '#000000';
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+      // 4. 計算等比例縮放與置中（Contain 演算法）
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      let drawWidth = targetWidth;
+      let drawHeight = targetHeight;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      const targetRatio = targetWidth / targetHeight;
+      const imgRatio = imgWidth / imgHeight;
+
+      // 預留一些邊距（Padding），讓條碼不會貼死邊緣，這裏預留 10% 的安全邊距
+      const paddingFactor = 0.9; 
+      const maxW = targetWidth * paddingFactor;
+      const maxH = targetHeight * paddingFactor;
+
+      if (imgRatio > targetWidth / targetHeight) {
+        // 條碼太寬，以寬度為基準縮放
+        drawWidth = maxW;
+        drawHeight = maxW / imgRatio;
+      } else {
+        // 條碼太高，以高度為基準縮放
+        drawHeight = maxH;
+        drawWidth = maxH * imgRatio;
+      }
+
+      // 計算置中座標
+      offsetX = (targetWidth - drawWidth) / 2;
+      offsetY = (targetHeight - drawHeight) / 2;
+
+      // 5. 將原始條碼繪製到固定尺寸的畫布上
+      ctx.drawImage(canvas, offsetX, offsetY, drawWidth, drawHeight);
+
+      // 6. 導出並下載
+      const imageUrl = exportCanvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      const nowUTC = new Date().toISOString();
+      const filetimestamp = nowUTC.replace(/[-:.]/g, '_');
+      link.download = `${canvas.id}_${filetimestamp}.png`;
+      link.href = imageUrl;
+      link.click();
+    }
+
+
+
+    
+    function downloadPNG_v1(canvas) {
       const imageUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       const nowUTC = new Date().toISOString();
