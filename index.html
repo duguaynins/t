@@ -1,226 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>nins / date.sys</title>
-
-<style>
-body{
-    margin:0;
-    overflow:hidden;
-    background:#111827;
-}
-
-canvas{
-    display:block;
-    width:100vw;
-    height:100vh;
-}
-
-/* 全螢幕轉場 */
-#flash{
-    position:fixed;
-    inset:0;
-    background:transparent;
-    z-index:9999;
-    pointer-events:none;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    transition:
-        background-color 1.2s ease,
-        opacity 1s ease;
-}
-
-#secret{
-    font-family:monospace;
-    font-size:clamp(18px,2vw,28px);
-    letter-spacing:2px;
-
-    color:#000;
-    opacity:0;
-
-    transition:
-        color 1s ease,
-        opacity 1s ease,
-        transform 1s ease;
-
-    transform:translateY(10px);
-}
-</style>
-</head>
-
-<body>
-
-<canvas id="c"></canvas>
-
-<div id="flash">
-    <div id="secret"></div>
-</div>
-
-<script>
-const canvas = document.getElementById("c");
-const ctx = canvas.getContext("2d");
-
-let w, h, dpr;
-
-function resize(){
-    dpr = window.devicePixelRatio || 1;
-    w = window.innerWidth;
-    h = window.innerHeight;
-
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-
-    canvas.style.width = w + "px";
-    canvas.style.height = h + "px";
-
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-}
-resize();
-window.addEventListener("resize", resize);
-
-function hsla(h,a){
-    return `hsla(${h},85%,60%,${a})`;
-}
-
-function draw(t){
-
-    const time = t * 0.001;
-
-    ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = "rgba(17,24,39,0.18)";
-    ctx.fillRect(0,0,w,h);
-
-    ctx.globalCompositeOperation = "lighter";
-
-    const breath = 0.6 + Math.sin(time * 0.8) * 0.25;
-    const baseHue = time * 30;
-
-    for(let i=0;i<12;i++){
-
-        const angle = time * 0.4 + i * 0.6;
-
-        const radius =
-            (Math.min(w,h) * 0.22) *
-            (1 + Math.sin(time*0.6 + i)*0.3);
-
-        const x =
-            w/2 + Math.cos(angle + i) * radius;
-
-        const y =
-            h/2 + Math.sin(angle * 1.3 + i) * radius;
-
-        const hue = (baseHue + i*15) % 360;
-
-        const size = Math.min(w,h) * 0.35;
-
-        const g =
-            ctx.createRadialGradient(
-                x,y,0,
-                x,y,size
-            );
-
-        g.addColorStop(0, hsla(hue,0.18 * breath));
-        g.addColorStop(1,"transparent");
-
-        ctx.fillStyle = g;
-        ctx.fillRect(0,0,w,h);
+<head translate="yes">
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/x-icon" sizes="48x48" href="data:image/x-icon;base64,AAABAAEAMDAAAAAAIABiDwAAFgAAAIlQTkcNChoKAAAADUlIRFIAAAAwAAAAMAgGAAAAVwL5hwAADylJREFUeJzNWnl4FUW2/1XfBMhyE0xCNjYDIiCgjgLBESEKiDxxBiUuLAoqMoiKioozo46M4DCCz3VwePhwQRAXniKoYTECDshAyEISNkEZSCBkgSz39t26u37zR3ff3NzcBPPNvO+983319VZ16ndOnTrnVFULdJBIKgAUIYQe8q4vgGusMhBATwBdAcRaVTwAGgBUADgMYA+APUKIH0N4RAGQQgjZUUw/F7gg6Qh5ziT5MMl8ki52nFxW24dJZobwdZAU/27wSsh9L5JLSdaFATJI6tZVWsUm+zm0TijVWTx7RerzXwXvsK5RJJ8KA65bRTICSSkpZcRPtlB2+1BBnqJpTsG+/x3gB5PcHdKR1hZowzCo6zoNo6WSdV2nruttCSQtnjbtIjn4XxIiRAu3kmywwLULvDU4SUYArOt6q3cRBGkgeWsolkgUcbKQjBJC6CRnA/gv67UBwEESQrRsJqWEopgme+TwUWz+5lvsKyrGqYpKGIYBp9OJIZcNxJjRI3FDzih0iYkBCQCteYX2Zd3/Rgix0sbUEc3PtjRrkDSklGyor4+oeZIsKyvjlJkPMD6tN2O69WS/K7J50613cvL0+zgiZzyTe/encKbyF7+8nms+/LhV++AQNI+YwebJPvtCI2GDt21+kg1e0zRJku+uXsvho8exsaEh2JHd+YqVq5iQkcX0voP4zMIXWVBYzPrGJuqGCcbj9fHEP05y5Tvv84prcoi4FM6YNZcN9Q2WEO1OdFuISaEY2wM/gGQjSUPTNIMk1374Ebt278vkrIEcPmosmxobaVia+vOyV4jYZN45czZ/OnEy2Ks3oNHt9dHl8VL1B6hZ9evrG7jgmYWEM5Xjf5XL8+fOU8pmhdhChQ6yVRpJDogoBK0gRdNV7rUa6jbTM2eq+MBDjzGpZz9u+iqPum4q5dP1nxFxKZz/2+dIkpokG90qXR4v3V4fVZ/fKj66vT42ulV6A+YcfWvlKorENN51zyzqmkYpJUvLDnLk9eNZV1sXbk72rN9rYWwZ7EK0/6RVMejSbDOprKzkxk1fBdVytuosu/cbwl/feTcNQ9Lj97PBpbJJ9ZhaD4I3i8vjZZPqYYNLZaNbJUm+sGQZEZvM9z/4kCSpqipLDpTS5/NF8lQ2pidbjAJJxRqBDJquy46kEcnn95Mkn124iM6MLB7+4Rh1KdngcgeN1SDpChkBl9dHLYSjT9Pp9vqpqh6OuP4mDskeRY/qaeWGwx8t1g0WVkFSCfU6y8K1bzOsrq7mK6/9hV/nbSFJer1e9h0yjPc8MJck2ej2UJIsLCnlu2s+YtGBMuqkOQe8PupS8thPJ7js1Tf56ptv8VTl6aApvbdmHUVCapD33r37+PTvn2ee9RwmlI1tWQuvRDLVkqxFDiOlpK7rvG3KPURcCqOTMrl8xds8VH6QXVJ6cM1H60kpqRsG12/YxNSsgXRm9GF6n0HM2/oNDUPSr2k8evxHXjZ0JOPTsxjTrRdHjr2Z1bV1NKTkTycrmNTrUj6zcDH37y9katYAwpnGhIws5n+7g2SLwGfjayCZCgB2wjQZQCLMACIAMzgJIXD48BFs+XYnZs2YjimTJ2Heb5/DI08/iwSnE6mpKYAQ0A0D76xeC82QyMhIh8fvx9pPPoNQBDpFRWHLtnycqjyNtLRUZGZmoPTQYXz/931QhMBFXRMx8NJ++PSLrzAhdxp69+6F/35jGSQEvty8LdxZCgtjooU5KEAuACIkMtMMlTh+4iRUt4oJ48fitaUvYuzo67B7XyECWgBJiYkwCDgUBQkJTvgDAei6Dp/Ph8yMtCCzBKcThmGAJPyBABwOB7qlpM"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="robots" content="nosnippet, noai, noimageai">
+  <meta name="description" content="© 2024 NINS (by JPGT). By using any of the services, it means you have agreed to any content and all content!">
+  <link rel="canonical" href="https://copyright.nins.cc/">
+  <title translate="no">nins / barcode.sys</title>
+  <script src="https://copyright.nins.cc/children/0001/nins-update.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+  <script src="https://copyright.nins.cc/children/0001/jsQR.min.js"></script>
+  <script src="https://unpkg.com/bwip-js/dist/bwip-js-min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <style>
+    body { overflow-x: hidden; overflow-y: auto; }
+    html, body {
+      font-size: 14px;
+      margin: 0;
+      background-color: #000;
+      color: #33ff66;
+      user-select: none;
+      width: 100%;
+      min-height: 100%;
+      font-family: "Courier New", Courier, monospace;
     }
-
-    requestAnimationFrame(draw);
-}
-
-requestAnimationFrame(draw);
-
-/* -------------------------- */
-
-function wait(ms){
-    return new Promise(r => setTimeout(r, ms));
-}
-
-document.addEventListener(
-    "click",
-    async () => {
-
-        let offset = -new Date().getTimezoneOffset();
-        const hours = Math.trunc(offset / 60);
-        const minutes = Math.abs(offset % 60);
-        const sign = hours >= 0 ? "+" : "-";
-        const tz =
-    `${sign}` +
-    `${String(Math.abs(hours)).padStart(2,"0")}:` +
-    `${String(minutes).padStart(2,"0")}`;
-        let utc = new Date().toISOString();
-        let details = `${utc}${tz}`;
-        ///let details = `${utc}${offset}/60`;
-
-        const flash = document.getElementById("flash");
-        const secret = document.getElementById("secret");
-
-        /* 1. 全黑 */
-
-        flash.style.backgroundColor = "#000";
-
-        /* 2. 偷偷顯示黑字 */
-
-        secret.textContent = details;
-        secret.style.color = "#000";
-        secret.style.opacity = "1";
-        ///secret.style.transform = "translateY(0)";
-
-        await wait(1500);
-
-        /* 3. 切成全白 */
-
-        flash.style.backgroundColor = "#fff";
-
-        await wait(600);
-
-        /* 4. 白底浮現文字 */
-
-        secret.style.color = "#111";
-        secret.style.opacity = "1";
-
-        await wait(1500);
-
-        /* 5. 建立 Calendar URL */
-
-        let dates = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-        let year = dates.slice(0, 4);
-        let ctz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-        navigator.geolocation.getCurrentPosition((pos)=>{
-
-            const location =
-                `${pos.coords.latitude},${pos.coords.longitude}`;
-
-            const url = [
-                "https://www.google.com/calendar/render?",
-                "action=TEMPLATE",
-                `&text=${year}-${ctz}`,
-                `&dates=${dates}/${dates}`,
-                `&ctz=${ctz}`,
-                `&location=${encodeURIComponent(location)}`,
-                "&trp=true",
-                "&recur=",
-                "&add=",
-                `&details=${encodeURIComponent(details)}`,
-                "&source=",
-                "&sprop="
-            ].join("");
-
-            window.location.href = url;
-
-        });
-
-    },
-    { once:true }
-);
-</script>
-
+    input, textarea, button, select { font-size: 18px; font-family: inherit; }
+    #google_translate_element {
+      position: fixed;
+      top: 8px;
+      right: 12px;
+      z-index: 100000;
+      display: block;
+    }
+    .skiptranslate {
+      display: none !important;
+      position: static !important;
+      width: 0 !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      background: none !important;
+    }
+    iframe { display: none !important; }
+    .shell { display: flex; flex-direction: column; width: 100%; height: 100%; background: #000; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; background: #001100; color: #33ff66; flex: 0 0 auto; border-bottom: 1px solid #33ff66; flex-wrap: wrap; }
+    .brand { font-size: 14px; font-weight: 700; white-space: nowrap; margin-right: 8px; letter-spacing: 0.08em; }
+    .tabbutton { appearance: none; border: 1px solid #33ff66; background: #000; color: #33ff66; padding: 8px 14px; cursor: pointer; font-size: 14px; text-transform: uppercase; border-radius: 4px; }
+    .tabbutton.active { background: #33ff66; color: #000; }
+    .workspace { position: relative; flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; background: #000; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; }
+    .view { position: relative; width: 100%; min-height: auto; display: block; overflow: visible; }
+    #decodeView { order: 1; }
+    #encodeView { order: 2; }
+    .view.active .page-shell { box-shadow: 0 0 0 1px #33ff66; }
+    .page-shell { position: relative; width: 100%; min-height: auto; max-width: 1200px; margin: 0 auto; background: #000; color: #33ff66; text-align: left; box-sizing: border-box; word-break: break-word; display: flex; flex-direction: column; gap: 12px; padding: 12px 14px; }
+    .page-shell { position: relative; width: 100%; min-height: auto; max-width: 1200px; margin: 0 auto; background: #000; color: #33ff66; text-align: left; box-sizing: border-box; word-break: break-word; display: flex; flex-direction: column; gap: 12px; padding: 12px 14px; border: 1px solid #33ff66; }
+    .section-block { border: 1px solid #33ff66; border-radius: 6px; background: #000; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+    .section-head { font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid #33ff66; padding-bottom: 8px; }
+    .section-body { display: flex; flex-direction: column; gap: 10px; }
+    #content { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: #000; color: #33ff66; min-height: 160px; }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes blinkBorder { 0%, 100% { border-color: #33ff66; } 50% { border-color: #000; } }
+    @keyframes cursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    .hot { animation: blinkBorder 1.2s step-end infinite; border: 1px solid #33ff66; border-radius: 4px; }
+    .main { border: 1px solid #33ff66; padding: 10px 12px; animation: blinkBorder 1.8s step-end infinite; background: #000; color: #33ff66; border-radius: 4px; }
+    input:hover { background-color: #002200; color: #33ff66; }
+    input:active { background-color: #001100; color: #33ff66; }
+    input:focus { outline: none; border: 1px solid #ffffff; box-shadow: 0 0 0 2px #33ff66; }
+    .thumb { width: 100px; height: 60px; margin: 0.5em; padding: 0.5em; cursor: pointer; border: 1px solid #33ff66; object-fit: contain; display: none; flex-shrink: 0; background-color: #000; border-radius: 4px; }
+    #encodeSection, #decodeSection { width: 100%; height: 100%; }
+    .fullpage-overlay { position: fixed; inset: 0; z-index: 99999; background: #000; animation: fadeOut 3s forwards; pointer-events: none; }
+    .titlebar { background: #001100; color: #33ff66; border: 1px solid #33ff66; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; border-radius: 6px; }
+    .panel { border: 1px solid #33ff66; background: #000; color: #33ff66; border-radius: 6px; }
+    .panel-inverse { border: 1px solid #33ff66; background: #33ff66; color: #000; border-radius: 6px; }
+    .panel-title { border: 1px solid #ffd400; background: #ffd400; color: #000; border-radius: 6px; }
+    .promptline { text-align: left; padding: 8px 10px; line-height: 1.5; }
+    .promptline::before { content: 'C:\\>'; margin-right: 8px; }
+    .blink { animation: cursorBlink 1s step-end infinite; }
+  </style>
+</head>
+<body>
+  <button disabled id="disabled" class="fullpage-overlay"></button>
+  <div class="shell">
+    <div class="topbar">
+      <div style="display:flex; justify-content:center; align-items:center; gap:8px; width:100%; color: red;">
+        <div class="brand" translate="no">NINS DOS BARCODE</div>
+      </div>
+      <div id="google_translate_element"></div>
+    </div>
+    <div class="workspace">
+      <section class="view active" id="encodeView">
+        <div class="page-shell">
+          <div class="section-block">
+            <div class="titlebar panel-title"><strong>ENCODE MODE</strong><span class="mode-status">READY</span></div>
+          </div>
+          <div class="section-block">
+            <div class="section-head"><strong id="anything" class="promptline"><b translate="no">NINS</b> Enter content and generate barcodes.</strong></div>
+            <div class="section-body">
+              <div class="panel-inverse" style="padding: 8px 12px; line-height: 1.5;">Type text first. The preview updates automatically.</div>
+            </div>
+          </div>
+          <div id="content" class="section-block panel" style="width: 100%; flex: 1; overflow:auto; position: relative;">
+            <div class="section-head">Preview</div>
+            <div class="section-body">
+              <div id="code-result" style="justify-content: center;"><canvas class="preview" id="show" style="width: auto; height: auto; margin: 1em 0; display: none; max-width: 100%;"></canvas><br></div>
+              <div style="display: block; padding: 8px 12px 12px 12px; text-align: center;"><h1 translate="yes" style="margin: 0; color: #33ff66;">BARCODE</h1></div>
+            </div>
+          </div>
+          <div class="section-block">
+            <div class="section-head">Barcode Presets</div>
+            <div class="section-body">
+              <div class="panel-inverse" style="padding: 8px 12px; line-height: 1.5;">Click a small barcode to enlarge. Click the large preview to download.</div>
+              <div class="main CONTENT">
+                <div id="code-slider" style="display: flex; justify-content: flex-start; flex-shrink: 0; align-items: center; overflow-y: auto; overflow-x: auto; background: #000;">
+                  <div class="hot" style="position: relative; width: 100px; height: 60px; margin: 1em 0px; padding: 0.5em; cursor: pointer; object-fit: contain; flex-shrink: 0; background-color: #000;"><input id="code-bgcolor" value="#000000" type="color" class="color-bg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity:1.0; z-index:1; border: 0;"><input id="code-color" value="#33ff66" type="color" class="color-bar" style="position: absolute; top:30%; left:30%; width:40%; height:40%; z-index:2; border: 0;"></div>
+                  <canvas class="thumb twod hot" id="code39"></canvas><canvas class="thumb twod hot" id="qrcode"></canvas><canvas class="thumb twod" id="pdf417"></canvas><canvas class="thumb twod" id="datamatrix"></canvas><canvas class="thumb twod" id="azteccode"></canvas><canvas class="thumb twod" id="maxicode"></canvas><canvas class="thumb oned" id="ean13"></canvas><canvas class="thumb oned" id="ean8"></canvas><canvas class="thumb oned" id="upca"></canvas><canvas class="thumb oned" id="code128"></canvas><canvas class="thumb oned" id="itf14"></canvas><canvas class="thumb oned" id="codabar"></canvas><canvas class="thumb oned" id="msi"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="section-block">
+            <div class="section-head">Input</div>
+            <div class="section-body">
+              <div class="panel-inverse" style="padding: 8px 12px; line-height: 1.5;">Background and barcode colors apply after you type text.</div>
+              <input class="main" id="InputRoom" type="text" name="noMemory" autocomplete="off" placeholder="TYPE TEXT HERE" style="width: 100%; text-align: left; box-sizing: border-box;"/>
+            </div>
+          </div>
+          <div class="section-block">
+            <div class="section-head">Mode</div>
+            <div class="section-body">
+              <div class="panel-inverse" style="padding: 8px 12px; line-height: 1.5;">Use the tabs above to switch modes. Encode creates codes and decode reads them.</div>
+            </div>
+          </div>
+          <!--strong style="background-color: #000; color: #33ff66; font-size: max(1vh,1vw);">NINS DOS INTERFACE</strong!-->
+        </div>
+      </section>
+      <section class="view" id="decodeView">
+        <div class="page-shell">
+          <div class="section-block">
+            <div class="titlebar panel-title"><strong>DECODE MODE</strong><span class="mode-status">READY</span></div>
+          </div>
+          <div class="section-block">
+            <div class="section-head"><strong id="anything-decode" class="promptline"><b translate="no">NINS</b> Scan any 2D code.</strong></div>
+            <div class="section-body">
+              <div id="title" translate="yes">
+                <div class="panel-inverse" style="padding: 8px 12px; line-height: 1.5;">Select an image or start the camera.</div>
+              </div>
+              <input type="file" id="input_2d" class="hidden-input" accept="image/*" capture="environment" style="display:none">
+              <canvas id="canvas_2d" style="display:none;"></canvas>
+            </div>
+          </div>
+          <div class="section-block">
+            <div class="section-head">Scanner</div>
+            <div class="section-body">
+              <div id="content-decode" class="center panel" style="display:flex; overflow:auto; width:100%; flex:1; color:#33ff66;"><div id="Container" style="background:#000; color:#33ff66; width:100%; display:flex; flex-direction:column;"><div id="result-display" style="width:100%; text-align: left;"><p translate="yes" id="status-message">Scanning stopped.</p><p translate="no" id="scan-result"></p><p translate="no" id="post-result" style="color:#33ff66;"></p></div><div id="scanner-container" style="max-width: 100vw; max-height: 100vh; object-fit: contain; border-top: 1px solid #33ff66; border-bottom: 1px solid #33ff66;"><video id="video-preview" autoplay muted playsinline style="width:100%; background:#000;"></video><div id="scan-line"></div></div><div style="display:none;" class="button-container"><button id="startButton" class="scan-button">Start Scan</button><button id="stopButton" class="scan-button stop-button" disabled>Stop Scan</button><label for="input_2d" class="scan-button" style="display:inline-flex; align-items:center; text-decoration:none;">Upload Image</label></div><div id="messageBox" class="message-box" role="alert" aria-live="assertive" aria-hidden="true"><p id="messageText"></p><button id="closeMessageBox" class="scan-button" aria-label="Close message box" style="display:none;">OK</button></div></div></div>
+            </div>
+          </div>
+          <div class="section-block">
+            <div class="section-head">Mode</div>
+            <div class="section-body">
+              <div class="panel-inverse" style="padding: 8px 12px; line-height: 1.5;">Use the camera for live scanning, or upload an image for manual decoding.</div>
+            </div>
+          </div>
+          <!--strong style="background-color: #000; color: #33ff66; font-size: max(1vh,1vw);">NINS DOS INTERFACE</strong!-->
+        </div>
+      </section>
+    </div>
+  </div>
+  <script>
+    const encodeView = document.getElementById('encodeView');
+    const decodeView = document.getElementById('decodeView');
+  </script>
+  <script>
+    function downloadPNG(canvas) {
+      const imageUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      const nowUTC = new Date().toISOString();
+      const filetimestamp = nowUTC.replace(/[-:.]/g, '_');
+      link.download = `${canvas.id}_${filetimestamp}.png`;
+      link.href = imageUrl;
+      link.click();
+    }
+    function gencode(text, bcid, format) {
+      if (format.test(text) && text.trim() !== '') {
+        bwipjs.toCanvas(bcid, { bcid: bcid, text: text, scale: 4, alttext: bcid, barcolor: document.getElementById('code-color').value, textcolor: document.getElementById('code-color').value });
+        document.getElementById(bcid).style.margin = '1em 0';
+        document.getElementById(bcid).style.display = 'block';
+      } else {
+        document.getElementById(bcid).style.display = 'none';
+      }
+    }
+    function gencodes(value) {
+      gencode(value, 'qrcode', /^.{0,1000}$/);
+      gencode(value, 'datamatrix', /^.{0,2000}$/);
+      gencode(value, 'pdf417', /^.{0,1800}$/);
+      gencode(value, 'azteccode', /^.{0,3000}$/);
+      gencode(value, 'maxicode', /^$/);
+      gencode(value, 'ean13', /^\d{12}$/);
+      gencode(value, 'ean8', /^\d{7}$/);
+      gencode(value, 'upca', /^\d{11}$/);
+      gencode(value, 'code128', /^[\x00-\x7F]+$/);
+      gencode(value, 'code39', /^[A-Z0-9\-\.\$\/\+\% ]+$/);
+      gencode(value, 'itf14', /^\d{13}$/);
+      gencode(value, 'codabar', /^[ABCD][0-9\-\$:\/\.]+[ABCD]$/);
+      gencode(value, 'msi', /^\d+$/);
+      document.querySelectorAll('#encodeView canvas').forEach(canvas => { canvas.style.background = document.getElementById('code-bgcolor').value; });
+    }
+    document.querySelectorAll('#encodeView .thumb').forEach(canvas => { canvas.addEventListener('click', () => { const preview = document.getElementById('show'); const ctx = preview.getContext('2d'); preview.width = canvas.width; preview.height = canvas.height; ctx.clearRect(0, 0, preview.width, preview.height); ctx.drawImage(canvas, 0, 0); }); });
+    document.getElementById('code-bgcolor').addEventListener('input', function(e) { document.querySelectorAll('#encodeView .thumb, #encodeView canvas.preview').forEach(element => { element.style.backgroundColor = e.target.value; }); });
+    document.getElementById('code-color').addEventListener('input', () => { const value = document.getElementById('InputRoom').value; if (value.trim() !== '') { gencodes(value); } });
+    document.getElementById('InputRoom').addEventListener('input', () => { const value = document.getElementById('InputRoom').value; if (value.trim() === '') { document.querySelectorAll('#encodeView canvas').forEach(c => { if (c.id !== 'show') { c.style.display = 'none'; } }); } else { gencodes(value); } });
+    document.querySelectorAll('#encodeView canvas').forEach(canvas => { canvas.addEventListener('click', async () => { if (!document.fullscreenElement) { try { canvas.style.background = document.getElementById('code-bgcolor').value; await canvas.requestFullscreen(); if (screen.orientation && screen.orientation.lock) { screen.orientation.lock('landscape').catch(() => {}); } } catch (e) { console.log(e); } } else { document.exitFullscreen(); downloadPNG(canvas); } }); });
+  </script>
+  <script>
+    const videoPreview = document.getElementById('video-preview');
+    const statusMessage = document.getElementById('status-message');
+    const scanResult = document.getElementById('scan-result');
+    const postResult = document.getElementById('post-result');
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+    const messageBox = document.getElementById('messageBox');
+    const messageText = document.getElementById('messageText');
+    const closeMessageBox = document.getElementById('closeMessageBox');
+    let codeReader = null;
+    let activeStream = null;
+    let selectedDeviceId = null;
+    let videoInputDevices = [];
+    function showMessageBox(message) { messageText.innerText = message; messageBox.style.display = 'block'; messageBox.setAttribute('aria-hidden', 'false'); }
+    function hideMessageBox() { messageBox.style.display = 'none'; messageBox.setAttribute('aria-hidden', 'true'); }
+    closeMessageBox.addEventListener('click', () => { hideMessageBox(); });
+    function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+    async function sendPost(payload) { const response = await fetch('/anycode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); return await response.text(); }
+    async function enumerateVideoDevices() { try { const devices = await navigator.mediaDevices.enumerateDevices(); videoInputDevices = devices.filter(device => device.kind === 'videoinput'); if (videoInputDevices.length === 0) { showMessageBox('No camera devices were found.'); startButton.disabled = true; stopButton.disabled = true; return; } const backCamera = videoInputDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear')); selectedDeviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId; } catch (err) { showMessageBox('Unable to access the camera. Check browser permissions.'); startButton.disabled = true; stopButton.disabled = true; } }
+    async function startScanning() { startButton.disabled = true; stopButton.disabled = false; if (!codeReader) { codeReader = new ZXing.BrowserMultiFormatReader(); } if (activeStream) { activeStream.getTracks().forEach(track => track.stop()); activeStream = null; } selectedDeviceId = null; if (false) { await enumerateVideoDevices(); if (!selectedDeviceId) { statusMessage.innerText = 'Device not found.'; return; } } statusMessage.innerText = 'Starting the camera~'; scanResult.innerText = ''; let isRunning = false; try { await codeReader.decodeFromVideoDevice(null, videoPreview, async (result, err) => { if (!result) { if (!isRunning) { statusMessage.innerHTML = `<label for="input_2d">You can also click click here to upload a 2D barcode!</label>`; } isRunning = true; } if (result) { if (isRunning) { statusMessage.innerText = '1D/2D Code detected!'; } isRunning = false; const url = `https://deurl.nins.cc/?data=${encodeURIComponent(result.text)}`; stopScanning(); scanResult.innerHTML = `<a href="${url}">${result.text}</a>`; setTimeout(function () { window.open(url, '_blank', 'noopener,noreferrer'); }, 2200); return; } if (err && !(err instanceof ZXing.NotFoundException)) { console.error(err); statusMessage.innerText = 'ERROR: ' + err; } }); activeStream = videoPreview.srcObject; } catch (e) { statusMessage.innerText = 'ALARM: ' + e; scanResult.innerHTML = `<label onclick="startScanning();" style="color:blue; cursor:pointer; text-decoration: underline;">[📷]</label> or <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">[🖼️]</label>`; } }
+    function stopScanning() { if (codeReader) { codeReader.reset(); } if (activeStream) { activeStream.getTracks().forEach(track => track.stop()); activeStream = null; } statusMessage.innerText = 'Ending.'; startButton.disabled = false; stopButton.disabled = true; }
+    startButton.addEventListener('click', () => { startScanning(); });
+    stopButton.addEventListener('click', () => { stopScanning(); scanResult.innerText = ''; });
+    videoPreview.addEventListener('click', async () => { const stream = videoPreview.srcObject; if (!stream) return; const track = stream.getVideoTracks()[0]; if (!track) return; try { const capabilities = track.getCapabilities(); if (capabilities.focusMode?.includes('manual')) { await track.applyConstraints({ advanced: [{ focusMode: 'manual' }] }); setTimeout(() => { track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); }, 1000); } } catch (e) { console.log('Autofocus control is not supported; letting the system handle it.'); } });
+    function showDecode(data) { stopScanning(); const url = `https://deurl.nins.cc/?data=${encodeURIComponent(data)}`; scanResult.innerHTML = `<a href="${url}">${data}</a>`; setTimeout(function () { window.open(url, '_blank', 'noopener,noreferrer'); }, 2200); return `<a href="${url}">${data}</a>`; }
+    document.getElementById('input_2d').addEventListener('change', function(e) { stopScanning(); const canvas = document.getElementById('canvas_2d'); const ctx = canvas.getContext('2d'); const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(event) { const img = new Image(); img.onload = function() { statusMessage.innerHTML = 'The image has been received, please wait...'; canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0, img.width, img.height); const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); const code = jsQR(imageData.data, imageData.width, imageData.height); if (code) { statusMessage.innerHTML = 'Scan complete. QR code found!'; showDecode(code.data); statusMessage.innerText = 'Output'; } else { statusMessage.innerHTML = 'Please increase the clarity and submit only the barcode.'; showDecode(''); statusMessage.innerText = 'Again'; scanResult.innerHTML = `<label onclick="startScanning();" style="color:blue; cursor:pointer; text-decoration: underline;">[📷]</label> or <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">[🖼️]</label>`; } }; img.src = event.target.result; }; reader.readAsDataURL(file); });
+    document.addEventListener('DOMContentLoaded', () => { const urlParams = new URLSearchParams(window.location.search); const data = urlParams.get('data') || ''; document.getElementById('InputRoom').value = data; const event = new Event('input', { bubbles: true }); document.getElementById('InputRoom').dispatchEvent(event); startScanning(); });
+  </script>
+  <script>
+    function googleTranslateElementInit() { new google.translate.TranslateElement({ pageLanguage: 'en', includedLanguages: '', autoDisplay: false }, 'google_translate_element'); }
+    function autoTranslate(lang) {
+      const tryTranslate = () => {
+        const combo = document.querySelector('.goog-te-combo');
+        if (combo) {
+          combo.value = lang;
+          combo.dispatchEvent(new Event('change'));
+        } else {
+          setTimeout(tryTranslate, 300);
+        }
+      };
+      tryTranslate();
+    }
+    window.googleTranslateElementInit = googleTranslateElementInit;
+    window.addEventListener('load', () => {
+      const script = document.createElement('script');
+      script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      document.body.appendChild(script);
+      setTimeout(() => {
+        const tlang = navigator.language || navigator.userLanguage || 'en-US';
+        autoTranslate(tlang);
+      }, 1500);
+    });
+  </script>
 </body>
 </html>
