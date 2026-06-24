@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head translate="yes">
@@ -8,7 +10,19 @@
   <meta name="robots" content="nosnippet, noai, noimageai">
   <meta name="description" content="© 2024 NINS (by JPGT). By using any of the services, it means you have agreed to any content and all content!">
   <link rel="canonical" href="https://copyright.nins.cc/">
-  <title translate="no">nins / barcode.sys</title>
+  <title translate="no">nins / barcodes.sys</title>
+  
+
+  
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#FFFFFF">
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
+  </script>
+  
   <script src="https://copyright.nins.cc/children/0001/nins-update.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
@@ -88,7 +102,7 @@
   <div class="shell">
     <div class="topbar">
       <div style="display:flex; justify-content:center; align-items:center; gap:8px; width:100%; color: red;">
-        <div class="brand" translate="no">NINS DOS BARCODE</div>
+        <div class="brand" translate="no">NINS DOS BARCODES</div>
       </div>
       <div id="google_translate_element"></div>
     </div>
@@ -179,8 +193,8 @@
     
     function downloadPNG(canvas) {
       // 1. 設定你想固定的最終輸出像素大小（例如 800 x 450）
-      const targetWidth = 800;
-      const targetHeight = 450;
+      const targetWidth = 1024;///800;
+      const targetHeight = 1024;///450;
 
       // 2. 建立一個隱藏的虛擬 Canvas 作為畫布
       const exportCanvas = document.createElement('canvas');
@@ -300,13 +314,13 @@
     function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
     async function sendPost(payload) { const response = await fetch('/anycode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); return await response.text(); }
     async function enumerateVideoDevices() { try { const devices = await navigator.mediaDevices.enumerateDevices(); videoInputDevices = devices.filter(device => device.kind === 'videoinput'); if (videoInputDevices.length === 0) { showMessageBox('No camera devices were found.'); startButton.disabled = true; stopButton.disabled = true; return; } const backCamera = videoInputDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear')); selectedDeviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId; } catch (err) { showMessageBox('Unable to access the camera. Check browser permissions.'); startButton.disabled = true; stopButton.disabled = true; } }
-    async function startScanning() { startButton.disabled = true; stopButton.disabled = false; if (!codeReader) { codeReader = new ZXing.BrowserMultiFormatReader(); } if (activeStream) { activeStream.getTracks().forEach(track => track.stop()); activeStream = null; } selectedDeviceId = null; if (false) { await enumerateVideoDevices(); if (!selectedDeviceId) { statusMessage.innerText = 'Device not found.'; return; } } statusMessage.innerText = 'Starting the camera~'; scanResult.innerText = ''; let isRunning = false; try { await codeReader.decodeFromVideoDevice(null, videoPreview, async (result, err) => { if (!result) { if (!isRunning) { statusMessage.innerHTML = `<label for="input_2d">You can also click click here to upload a 2D barcode!</label>`; } isRunning = true; } if (result) { if (isRunning) { statusMessage.innerText = '1D/2D Code detected!'; } isRunning = false; const url = `https://deurl.nins.cc/?data=${encodeURIComponent(result.text)}`; stopScanning(); scanResult.innerHTML = `<a href="${url}">${result.text}</a>`; setTimeout(function () { window.open(url, '_blank', 'noopener,noreferrer'); }, 2200); return; } if (err && !(err instanceof ZXing.NotFoundException)) { console.error(err); statusMessage.innerText = 'ERROR: ' + err; } }); activeStream = videoPreview.srcObject; } catch (e) { statusMessage.innerText = 'ALARM: ' + e; scanResult.innerHTML = `<label onclick="startScanning();" style="color:blue; cursor:pointer; text-decoration: underline;">[📷]</label> or <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">[🖼️]</label>`; } }
+    async function startScanning() { startButton.disabled = true; stopButton.disabled = false; if (!codeReader) { codeReader = new ZXing.BrowserMultiFormatReader(); } if (activeStream) { activeStream.getTracks().forEach(track => track.stop()); activeStream = null; } selectedDeviceId = null; if (false) { await enumerateVideoDevices(); if (!selectedDeviceId) { statusMessage.innerText = 'Device not found.'; return; } } statusMessage.innerText = 'Starting the camera~'; scanResult.innerText = ''; let isRunning = false; try { await codeReader.decodeFromVideoDevice(null, videoPreview, async (result, err) => { if (!result) { if (!isRunning) { statusMessage.innerHTML = `<label for="input_2d">You can also click click here to upload a 2D barcode!</label>`; } isRunning = true; }             if (result) { if (isRunning) { statusMessage.innerText = '1D/2D Code detected!'; } isRunning = false; const formatName = ZXing.BarcodeFormat[result.format] || 'UNKNOWN'; const url = `https://deurl.nins.cc/?data=${encodeURIComponent(result.text)}`; stopScanning(); scanResult.innerHTML = `<span style="color:#ffd400;">[${formatName}]</span> <a href="${url}">${result.text}</a>`; setTimeout(function () { window.open(url, '_blank', 'noopener,noreferrer'); }, 2200); return; } if (err && !(err instanceof ZXing.NotFoundException)) { console.error(err); statusMessage.innerText = 'ERROR: ' + err; } }); activeStream = videoPreview.srcObject; } catch (e) { statusMessage.innerText = 'ALARM: ' + e; scanResult.innerHTML = `<label onclick="startScanning();" style="color:blue; cursor:pointer; text-decoration: underline;">[📷]</label> or <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">[🖼️]</label>`; } }
     function stopScanning() { if (codeReader) { codeReader.reset(); } if (activeStream) { activeStream.getTracks().forEach(track => track.stop()); activeStream = null; } statusMessage.innerText = 'Ending.'; startButton.disabled = false; stopButton.disabled = true; }
     startButton.addEventListener('click', () => { startScanning(); });
     stopButton.addEventListener('click', () => { stopScanning(); scanResult.innerText = ''; });
     videoPreview.addEventListener('click', async () => { const stream = videoPreview.srcObject; if (!stream) return; const track = stream.getVideoTracks()[0]; if (!track) return; try { const capabilities = track.getCapabilities(); if (capabilities.focusMode?.includes('manual')) { await track.applyConstraints({ advanced: [{ focusMode: 'manual' }] }); setTimeout(() => { track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); }, 1000); } } catch (e) { console.log('Autofocus control is not supported; letting the system handle it.'); } });
-    function showDecode(data) { stopScanning(); const url = `https://deurl.nins.cc/?data=${encodeURIComponent(data)}`; scanResult.innerHTML = `<a href="${url}">${data}</a>`; setTimeout(function () { window.open(url, '_blank', 'noopener,noreferrer'); }, 2200); return `<a href="${url}">${data}</a>`; }
-    document.getElementById('input_2d').addEventListener('change', function(e) { stopScanning(); const canvas = document.getElementById('canvas_2d'); const ctx = canvas.getContext('2d'); const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(event) { const img = new Image(); img.onload = function() { statusMessage.innerHTML = 'The image has been received, please wait...'; canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0, img.width, img.height); const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); const code = jsQR(imageData.data, imageData.width, imageData.height); if (code) { statusMessage.innerHTML = 'Scan complete. QR code found!'; showDecode(code.data); statusMessage.innerText = 'Output'; } else { statusMessage.innerHTML = 'Please increase the clarity and submit only the barcode.'; showDecode(''); statusMessage.innerText = 'Again'; scanResult.innerHTML = `<label onclick="startScanning();" style="color:blue; cursor:pointer; text-decoration: underline;">[📷]</label> or <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">[🖼️]</label>`; } }; img.src = event.target.result; }; reader.readAsDataURL(file); });
+    function showDecode(data, format) { stopScanning(); const url = `https://deurl.nins.cc/?data=${encodeURIComponent(data)}`; const tag = format ? `<span style="color:#ffd400;">[${format}]</span> ` : ''; scanResult.innerHTML = `${tag}<a href="${url}">${data}</a>`; setTimeout(function () { window.open(url, '_blank', 'noopener,noreferrer'); }, 2200); }
+    document.getElementById('input_2d').addEventListener('change', function(e) { stopScanning(); const canvas = document.getElementById('canvas_2d'); const ctx = canvas.getContext('2d'); const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(event) { const img = new Image(); img.onload = function() { statusMessage.innerHTML = 'The image has been received, please wait...'; canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0, img.width, img.height); const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); const code = jsQR(imageData.data, imageData.width, imageData.height);             if (code) { statusMessage.innerHTML = 'Scan complete. QR code found!'; showDecode(code.data, 'QR_CODE'); statusMessage.innerText = 'Output'; } else { statusMessage.innerHTML = 'Please increase the clarity and submit only the barcode.'; showDecode(''); statusMessage.innerText = 'Again'; scanResult.innerHTML = `<label onclick="startScanning();" style="color:blue; cursor:pointer; text-decoration: underline;">[📷]</label> or <label for="input_2d" style="color:blue; cursor:pointer; text-decoration: underline;">[🖼️]</label>`; } }; img.src = event.target.result; }; reader.readAsDataURL(file); });
     document.addEventListener('DOMContentLoaded', () => { const urlParams = new URLSearchParams(window.location.search); const data = urlParams.get('data') || ''; document.getElementById('InputRoom').value = data; const event = new Event('input', { bubbles: true }); document.getElementById('InputRoom').dispatchEvent(event); startScanning(); });
   </script>
   <script>
