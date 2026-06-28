@@ -1,11 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="auto">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>nins / reHTML.SYS</title>
+<title>nins / reCAMERA.SYS</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: 'Courier New', 'Consolas', monospace;
@@ -42,20 +42,20 @@ body {
 .btn:active { background: #333; }
 .btn.outline { opacity: .7; }
 .btn.outline:hover { opacity: 1; background: #000; color: #fff; }
-
-.upload-label {
-  color: #000; font-size: 0.7rem; cursor: pointer;
-  padding: 5px 10px; border: 2px solid #000; opacity: .7;
-  text-transform: uppercase; letter-spacing: 1px; font-weight: bold;
+select.btn {
+  appearance: none; -webkit-appearance: none;
+  background: #fff; cursor: pointer; min-width: 90px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23000'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  padding-right: 24px;
 }
-.upload-label:hover { opacity: 1; background: #000; color: #fff; }
-.upload-label input { display: none; }
-#fileName { color: #000; font-size: 0.65rem; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .7; margin-left: 4px; padding: 2px 6px; border: 1px dashed #000; }
+select.btn optgroup { font-family: 'Courier New', monospace; font-weight: bold; }
+select.btn option { font-weight: normal; }
 
 .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-.editor-panel, .preview-panel { display: flex; flex-direction: column; min-height: 200px; flex: 1; }
-.editor-panel { border-bottom: 3px double #000; }
+.view-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.capture-panel { display: flex; flex-direction: column; }
 
 .panel-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -63,18 +63,43 @@ body {
   font-size: 0.7rem; color: #000; text-transform: uppercase; letter-spacing: 1px;
   font-weight: bold;
 }
-.panel-header .count { opacity: .6; }
+.panel-header .info { opacity: .6; }
 
-textarea {
-  flex: 1; background: #fff; color: #000;
-  border: none; outline: none; padding: 12px;
-  font-family: 'Courier New', 'Consolas', monospace;
-  font-size: 13px; line-height: 1.5; resize: none; tab-size: 2;
+#video {
+  flex: 1; background: #000; display: block;
+  width: 100%; object-fit: contain; cursor: pointer;
+  min-height: 0;
 }
-textarea:focus { background: #fff; }
-textarea::placeholder { color: #000; opacity: .2; }
+#canvas { display: none; }
 
-#preview { flex: 1; background: #fff; border: none; }
+.no-signal {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  background: #000; color: #555; font-size: 1rem; letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.no-signal span { border: 1px solid #333; padding: 8px 16px; }
+.no-signal.hide { display: none; }
+
+.thumbnails {
+  display: flex; gap: 6px; padding: 8px 12px;
+  border-top: 2px solid #000; background: #fff;
+  overflow-x: auto; flex-wrap: nowrap; min-height: 70px; align-items: center;
+}
+.thumbnails .empty {
+  font-size: 0.65rem; opacity: .4; text-transform: uppercase; letter-spacing: 1px;
+}
+.thumbnails img {
+  height: 60px; width: 80px; object-fit: cover;
+  border: 2px solid #000; cursor: pointer;
+  flex-shrink: 0; transition: none;
+}
+.thumbnails img:hover { border-color: #fff; outline: 2px solid #000; }
+
+@keyframes flash-border {
+  0%, 100% { border-color: #000; }
+  50% { border-color: #fff; }
+}
+.thumbnails .newest { animation: flash-border 0.5s step-end infinite; }
 
 .statusbar {
   display: flex; align-items: center; justify-content: space-between;
@@ -95,147 +120,228 @@ textarea::placeholder { color: #000; opacity: .2; }
 
 @media (min-width: 768px) {
   .toolbar h1 { font-size: 0.85rem; }
-  textarea { font-size: 14px; }
 }
 </style>
 </head>
 <body>
 <div class="toolbar">
   <h1>C:\&gt;<span class="cursor-blink">&#9608;</span></h1>
-  <button class="btn run" id="runBtn">&gt; RUN</button>
-  <button class="btn outline" id="resetBtn">RESET</button>
-  <button class="btn outline" id="copyBtn">COPY</button>
-  <label class="upload-label">[LOAD]<input type="file" id="fileInput" accept=".html,.htm"></label>
-  <span id="fileName"></span>
+  <select id="pixelSelect" class="btn" title="RESOLUTION">
+    <optgroup label="4:3">
+      <option value="320x240">320x240</option>
+      <option value="640x480" selected>640x480</option>
+      <option value="800x600">800x600</option>
+      <option value="1280x960">1280x960</option>
+    </optgroup>
+    <optgroup label="16:9">
+      <option value="1280x720">1280x720</option>
+      <option value="1920x1080">1920x1080</option>
+      <option value="2560x1440">2560x1440</option>
+      <option value="3840x2160">3840x2160</option>
+    </optgroup>
+    <optgroup label="16:10">
+      <option value="1920x1200">1920x1200</option>
+    </optgroup>
+  </select>
+  <button class="btn" id="captureBtn">[CAPTURE]</button>
+  <button class="btn outline" id="saveBtn">SAVE</button>
+  <button class="btn outline" id="clearBtn">CLEAR</button>
+  <button class="btn outline" id="switchBtn">MIRROR</button>
+  <span id="camStatus" style="font-size:0.65rem;opacity:.6;margin-left:auto;letter-spacing:1px;">OFFLINE</span>
 </div>
 <div class="error-msg" id="errorMsg">ERROR</div>
 <div class="main">
-  <div class="editor-panel">
+  
+  <div class="capture-panel">
     <div class="panel-header">
-      <span>&#62; EDITOR</span>
-      <span class="count" id="lineCount">LINES: 1</span>
+      <span>&#62; GALLERY</span>
+      <span class="info" id="countInfo">0 PHOTO(S)</span>
     </div>
-    <textarea id="codeEditor" placeholder="&#62; 在此輸入 HTML 程式碼...">&#x3C;!DOCTYPE html&#x3E;
-&#x3C;html&#x3E;
-&#x3C;head&#x3E;
-  &#x3C;meta charset=&#x22;UTF-8&#x22;&#x3E;
-  &#x3C;title&#x3E;我的網頁&#x3C;/title&#x3E;
-&#x3C;/head&#x3E;
-&#x3C;body&#x3E;
-  &#x3C;h1&#x3E;Hello World!&#x3C;/h1&#x3E;
-  &#x3C;p&#x3E;DOS 風格 HTML 編輯器&#x3C;/p&#x3E;
-  &#x3C;button onclick=&#x22;alert(&#x27;DOS 萬歲！&#x27;)&#x22;&#x3E;點我&#x3C;/button&#x3E;
-&#x3C;/body&#x3E;
-&#x3C;/html&#x3E;</textarea>
+    <div class="thumbnails" id="gallery">
+      <span class="empty">[ EMPTY ]</span>
+    </div>
   </div>
-  <div class="preview-panel">
+
+  <div class="view-panel">
     <div class="panel-header">
-      <span>&#62; PREVIEW</span>
+      <span>&#62; VIEWFINDER</span>
+      <span class="info" id="resInfo">--x--</span>
     </div>
-    <iframe id="preview" srcdoc="<html><body style='display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:&quot;Courier New&quot;,monospace;color:#000;background:#fff;'><div style='text-align:center'><div style='font-size:48px;opacity:.3;'>&#95;</div><p style='margin-top:8px;'>Press RUN to start</p></div></body></html>"></iframe>
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+    <div class="no-signal" id="noSignal"><span>NO SIGNAL</span></div>
   </div>
+  
 </div>
 <div class="statusbar">
-  <span>C:\&gt; READY</span>
-  <span>DOS HTML EDITOR v1.0</span>
+  <span>C:\&gt; <span class="blink">&#9608;</span> CAMERA.SYS v1.0</span>
+  <span id="statusText">READY</span>
   <span id="statusTime"></span>
 </div>
 <script>
-const editor = document.getElementById('codeEditor');
-const preview = document.getElementById('preview');
-const runBtn = document.getElementById('runBtn');
-const fileInput = document.getElementById('fileInput');
-const fileName = document.getElementById('fileName');
-const resetBtn = document.getElementById('resetBtn');
-const copyBtn = document.getElementById('copyBtn');
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const noSignal = document.getElementById('noSignal');
+const gallery = document.getElementById('gallery');
+const captureBtn = document.getElementById('captureBtn');
+const saveBtn = document.getElementById('saveBtn');
+const clearBtn = document.getElementById('clearBtn');
+const switchBtn = document.getElementById('switchBtn');
+const pixelSelect = document.getElementById('pixelSelect');
 const errorMsg = document.getElementById('errorMsg');
-const lineCount = document.getElementById('lineCount');
+const camStatus = document.getElementById('camStatus');
+const resInfo = document.getElementById('resInfo');
+const countInfo = document.getElementById('countInfo');
+const statusText = document.getElementById('statusText');
 const statusTime = document.getElementById('statusTime');
 
-const DEFAULT_CODE = editor.value;
-
-function updateLineCount() {
-  const lines = editor.value.split('\n').length;
-  lineCount.textContent = 'LINES: ' + lines;
-}
-
-function runCode() {
-  const code = editor.value;
-  if (!code.trim()) {
-    preview.srcdoc = '<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#aaa;"><p>C:\\&gt; NO INPUT</p></body></html>';
-    return;
-  }
-  try {
-    preview.srcdoc = code;
-    errorMsg.classList.remove('show');
-  } catch (e) {
-    showError('EXECUTION ERROR: ' + e.message);
-  }
-}
+let stream = null;
+let photos = [];
+let mirrored = false;
+let cameraActive = false;
+let resolution = '640x480';
 
 function showError(msg) {
   errorMsg.textContent = '! ' + msg;
   errorMsg.classList.add('show');
+  setTimeout(() => errorMsg.classList.remove('show'), 3000);
 }
 
-function processFile(file) {
-  if (!file.name.match(/\.html?$/i)) {
-    showError('INVALID FILE: .html ONLY');
+async function startCamera() {
+  stopCamera();
+  try {
+    const [resW, resH] = resolution.split('x').map(Number);
+    stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: resW }, height: { ideal: resH }, aspectRatio: { ideal: resW / resH }, facingMode: 'environment' }, audio: false });
+    video.srcObject = stream;
+    await video.play();
+    cameraActive = true;
+    noSignal.classList.add('hide');
+    camStatus.textContent = 'ONLINE';
+    camStatus.style.opacity = '1';
+    statusText.textContent = 'CAMERA ONLINE';
+    captureBtn.disabled = false;
+    const track = stream.getVideoTracks()[0];
+    const settings = track.getSettings();
+    const w = settings.width || '?';
+    const h = settings.height || '?';
+    resInfo.textContent = w + 'x' + h;
+  } catch (e) {
+    cameraActive = false;
+    noSignal.classList.remove('hide');
+    camStatus.textContent = 'OFFLINE';
+    captureBtn.disabled = true;
+    statusText.textContent = 'NO CAMERA';
+    showError('CAMERA ERROR: ' + e.message);
+  }
+}
+
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  cameraActive = false;
+}
+
+function capturePhoto() {
+  if (!cameraActive) { showError('CAMERA OFFLINE'); return; }
+  const w = video.videoWidth || 640;
+  const h = video.videoHeight || 480;
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (mirrored) {
+    ctx.translate(w, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(video, 0, 0, w, h);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  photos.push(dataUrl);
+  updateGallery();
+  statusText.textContent = 'CAPTURED: ' + photos.length;
+  countInfo.textContent = photos.length + ' PHOTO(S)';
+}
+
+function updateGallery() {
+  gallery.innerHTML = '';
+  if (photos.length === 0) {
+    gallery.innerHTML = '<span class="empty">[ EMPTY ]</span>';
+    countInfo.textContent = '0 PHOTO(S)';
     return;
   }
-  fileName.textContent = file.name;
-  const reader = new FileReader();
-  reader.onload = e => {
-    editor.value = e.target.result;
-    updateLineCount();
-    runCode();
-  };
-  reader.onerror = () => showError('READ ERROR');
-  reader.readAsText(file);
+  photos.forEach((src, i) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.title = 'PHOTO #' + (i + 1);
+    img.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'NINS_RECAMERA_' + (i + 1) + '_' + new Date().toISOString().slice(0,19).replace(/[:-]/g, '') + '.jpg';
+      link.download = `${new Date().toISOString()}--${Intl.DateTimeFormat().resolvedOptions().timeZone}.jpg`;
+      link.download = `${new Date().toISOString().replace(/[:.]/g, "-")}--${Intl.DateTimeFormat().resolvedOptions().timeZone.replaceAll("/", "-")}.jpg`;
+
+      link.href = src;
+      link.click();
+    });
+    gallery.prepend(img);
+  });
+  const first = gallery.firstElementChild;
+  if (first) first.classList.add('newest');
 }
 
-editor.addEventListener('input', updateLineCount);
+function saveLatest() {
+  ///return;
+  if (photos.length === 0) { showError('NO PHOTO TO SAVE'); return; }
+  const link = document.createElement('a');
+  link.download = 'NINS_RECAMERA_X_' + new Date().toISOString().slice(0,19).replace(/[:-]/g, '') + '.jpg';
+  link.download = `${new Date().toISOString()}-${Intl.DateTimeFormat().resolvedOptions().timeZone}.jpg`;
+  link.download = `${new Date().toISOString().replace(/[:.]/g, "-")}--${Intl.DateTimeFormat().resolvedOptions().timeZone.replaceAll("/", "-")}.jpg`;
+  
+  link.href = photos[photos.length - 1];
+  link.click();
+  statusText.textContent = 'FILE SAVED';
+}
 
-editor.addEventListener('keydown', e => {
-  if (e.key === 'Tab') {
-    e.preventDefault();
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
-    editor.selectionStart = editor.selectionEnd = start + 2;
-  }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    e.preventDefault(); runCode();
-  }
-});
+function clearAll() {
+  if (photos.length === 0) return;
+  photos = [];
+  updateGallery();
+  statusText.textContent = 'GALLERY CLEARED';
+}
 
-runBtn.addEventListener('click', runCode);
-resetBtn.addEventListener('click', () => {
-  editor.value = DEFAULT_CODE;
-  fileName.textContent = '';
-  updateLineCount();
-  runCode();
-});
-
-copyBtn.addEventListener('click', () => {
-  navigator.clipboard.writeText(editor.value).then(() => {
-    copyBtn.textContent = 'DONE';
-    setTimeout(() => { copyBtn.textContent = 'COPY'; }, 2000);
-  }).catch(() => showError('COPY FAILED'));
-});
-
-fileInput.addEventListener('change', () => {
-  const f = fileInput.files[0];
-  if (f) processFile(f);
-});
+function toggleMirror() {
+  mirrored = !mirrored;
+  switchBtn.textContent = mirrored ? 'MIRROR' : 'MIRROR';
+  if (mirrored) video.style.transform = 'scaleX(-1)';
+  else video.style.transform = 'none';
+  statusText.textContent = mirrored ? 'MIRROR ON' : 'MIRROR OFF';
+}
 
 document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-    e.preventDefault(); runCode();
-  }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
-    e.preventDefault(); fileInput.click();
-  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); capturePhoto(); }
+  if (e.key === ' ' && document.activeElement === document.body) { e.preventDefault(); capturePhoto(); }
+});
+
+let savedPhotos = [];
+try {
+  const saved = localStorage.getItem('recamera_photos');
+  if (saved) { savedPhotos = JSON.parse(saved); }
+} catch(e) {}
+
+video.addEventListener('click', capturePhoto);
+video.addEventListener('touchend', e => { e.preventDefault(); capturePhoto(); });
+captureBtn.addEventListener('click', capturePhoto);
+saveBtn.addEventListener('click', saveLatest);
+clearBtn.addEventListener('click', clearAll);
+switchBtn.addEventListener('click', toggleMirror);
+pixelSelect.addEventListener('change', () => {
+  resolution = pixelSelect.value;
+  resInfo.textContent = resolution.replace('x', '\u00D7');
+  startCamera();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && cameraActive) { stopCamera(); }
+  if (!document.hidden) { startCamera(); }
 });
 
 function updateClock() {
@@ -245,8 +351,7 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
-updateLineCount();
-runCode();
+startCamera();
 </script>
 </body>
 </html>
