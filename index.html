@@ -1,10 +1,10 @@
-
 <!DOCTYPE html>
-<html lang="auto">
+<html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>nins / reCAMERA.SYS</title>
+<title>nins / QR-CROP.SYS</title>
+
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -13,9 +13,10 @@ body {
   cursor: default;
 }
 ::selection { background: #000; color: #fff; }
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #eee; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #fff; }
 ::-webkit-scrollbar-thumb { background: #000; border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: #333; }
 
 .toolbar {
   display: flex; align-items: center; gap: 6px;
@@ -31,318 +32,538 @@ body {
 .toolbar .cursor-blink { animation: blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-.btn {
+.btn, .file-label {
+  display: inline-block;
   background: #fff; color: #000; border: 2px solid #000;
   padding: 5px 12px; cursor: pointer; font-size: 0.7rem;
   font-family: 'Courier New', monospace;
   text-transform: uppercase; letter-spacing: 1px;
   transition: none; font-weight: bold;
+  text-align: center;
 }
-.btn:hover { background: #000; color: #fff; }
-.btn:active { background: #333; }
+.btn:hover:not(:disabled), .file-label:hover { background: #000; color: #fff; }
+.btn:active:not(:disabled) { background: #333; color: #fff; }
+.btn:disabled { opacity: .3; cursor: not-allowed; border-style: dashed; }
 .btn.outline { opacity: .7; }
 .btn.outline:hover { opacity: 1; background: #000; color: #fff; }
-select.btn {
-  appearance: none; -webkit-appearance: none;
-  background: #fff; cursor: pointer; min-width: 90px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23000'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 8px center;
-  padding-right: 24px;
+
+.main { flex: 1; display: grid; grid-template-columns: 1fr; overflow: hidden; }
+
+@media (min-width: 992px) {
+  .main { grid-template-columns: 380px 1fr; }
 }
-select.btn optgroup { font-family: 'Courier New', monospace; font-weight: bold; }
-select.btn option { font-weight: normal; }
 
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.sidebar { 
+  border-right: 2px solid #000; display: flex; flex-direction: column; 
+  background: #fff; overflow-y: auto;
+}
+.workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 12px; gap: 12px; }
 
-.view-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.capture-panel { display: flex; flex-direction: column; }
-
+.panel { display: flex; flex-direction: column; border: 1px solid #000; margin-bottom: 4px; }
 .panel-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 12px; background: #e8e8e8; border-bottom: 2px solid #000;
+  padding: 6px 12px; background: #f0f0f0; border-bottom: 1px solid #000;
   font-size: 0.7rem; color: #000; text-transform: uppercase; letter-spacing: 1px;
   font-weight: bold;
 }
-.panel-header .info { opacity: .6; }
+.panel-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 
-#video {
-  flex: 1; background: #000; display: block;
-  width: 100%; object-fit: contain; cursor: pointer;
-  min-height: 0;
+.img-frame {
+  border: 1px solid #000; background: #fafafa; display: flex; 
+  align-items: center; justify-content: center; min-height: 120px; position: relative;
+  overflow: hidden;
 }
-#canvas { display: none; }
+.img-frame img, .img-frame canvas {
+  max-width: 100%; max-height: 320px; object-fit: contain; display: block;
+}
 
 .no-signal {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  background: #000; color: #555; font-size: 1rem; letter-spacing: 2px;
-  text-transform: uppercase;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; color: #888; font-size: 0.75rem; letter-spacing: 2px;
 }
-.no-signal span { border: 1px solid #333; padding: 8px 16px; }
+.no-signal span { border: 1px dashed #888; padding: 4px 8px; }
 .no-signal.hide { display: none; }
 
-.thumbnails {
-  display: flex; gap: 6px; padding: 8px 12px;
-  border-top: 2px solid #000; background: #fff;
-  overflow-x: auto; flex-wrap: nowrap; min-height: 70px; align-items: center;
+.ocr-output {
+  font-family: 'Courier New', 'Consolas', monospace; font-size: 0.75rem;
+  line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;
+  background: #fafafa; border: 1px solid #000; padding: 10px;
+  min-height: 70px; max-height: 200px; overflow-y: auto; color: #000;
 }
-.thumbnails .empty {
-  font-size: 0.65rem; opacity: .4; text-transform: uppercase; letter-spacing: 1px;
-}
-.thumbnails img {
-  height: 60px; width: 80px; object-fit: cover;
-  border: 2px solid #000; cursor: pointer;
-  flex-shrink: 0; transition: none;
-}
-.thumbnails img:hover { border-color: #fff; outline: 2px solid #000; }
+.ocr-output.empty { color: #888; font-style: italic; }
 
-@keyframes flash-border {
-  0%, 100% { border-color: #000; }
-  50% { border-color: #fff; }
-}
-.thumbnails .newest { animation: flash-border 0.5s step-end infinite; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
 .statusbar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 12px; background: #e8e8e8;
-  border-top: 3px double #000;
+  padding: 6px 12px; background: #f0f0f0; border-top: 3px double #000;
   font-size: 0.65rem; color: #000; text-transform: uppercase; letter-spacing: 1px;
   font-weight: bold;
 }
 .statusbar .blink { animation: blink 1s step-end infinite; }
 
 .error-msg {
-  display: none; padding: 8px 12px;
-  background: #fff; color: #000;
-  font-size: 0.7rem; border-bottom: 3px double #000;
-  font-weight: bold;
+  display: none; padding: 8px 12px; background: #000; color: #fff;
+  font-size: 0.7rem; border-bottom: 3px double #000; font-weight: bold;
 }
 .error-msg.show { display: block; }
 
-@media (min-width: 768px) {
-  .toolbar h1 { font-size: 0.85rem; }
+/* Modal Dynamic */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.9); display: none; align-items: center; justify-content: center; z-index: 1000;
 }
+.modal-overlay.show { display: flex; }
+.modal { background: #fff; border: 3px double #000; padding: 16px 24px; max-width: 360px; width: 90%; }
+.modal-title { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid #000; padding-bottom: 4px; }
+.modal-message { font-size: 0.7rem; line-height: 1.5; margin-bottom: 16px; color: #333; }
 </style>
 </head>
 <body>
+
 <div class="toolbar">
   <h1>C:\&gt;<span class="cursor-blink">&#9608;</span></h1>
-  <select id="pixelSelect" class="btn" title="RESOLUTION">
-    <optgroup label="4:3">
-      <option value="320x240">320x240</option>
-      <option value="640x480" selected>640x480</option>
-      <option value="800x600">800x600</option>
-      <option value="1280x960">1280x960</option>
-    </optgroup>
-    <optgroup label="16:9">
-      <option value="1280x720">1280x720</option>
-      <option value="1920x1080">1920x1080</option>
-      <option value="2560x1440">2560x1440</option>
-      <option value="3840x2160">3840x2160</option>
-    </optgroup>
-    <optgroup label="16:10">
-      <option value="1920x1200">1920x1200</option>
-    </optgroup>
-  </select>
-  <button class="btn" id="captureBtn">[CAPTURE]</button>
-  <button class="btn outline" id="saveBtn">SAVE</button>
-  <button class="btn outline" id="clearBtn">CLEAR</button>
-  <button class="btn outline" id="switchBtn">MIRROR</button>
-  <span id="camStatus" style="font-size:0.65rem;opacity:.6;margin-left:auto;letter-spacing:1px;">OFFLINE</span>
+  <div style="font-size:0.75rem; font-weight:bold; letter-spacing:1px; margin-right:12px;">QR-CROP.SYS v2.0</div>
+  
+  <div class="file-input-wrapper" style="position:relative;">
+    <input type="file" id="file" accept="image/*" capture="environment" style="position:absolute;width:0.1px;height:0.1px;opacity:0;overflow:hidden;z-index:-1;">
+    <label for="file" class="file-label">[ F2: SELECT IMAGE ]</label>
+  </div>
+  
+  <span id="dotInfo" style="font-size:0.65rem; color:#666; margin-left:auto; letter-spacing:1px; text-transform:uppercase;">STANDBY</span>
 </div>
+
 <div class="error-msg" id="errorMsg">ERROR</div>
+
 <div class="main">
   
-  <div class="capture-panel">
-    <div class="panel-header">
-      <span>&#62; GALLERY</span>
-      <span class="info" id="countInfo">0 PHOTO(S)</span>
-    </div>
-    <div class="thumbnails" id="gallery">
-      <span class="empty">[ EMPTY ]</span>
+  <div class="sidebar">
+    <div class="workspace">
+      <div class="panel" style="flex:1; min-height:200px;">
+        <div class="panel-header">
+          <span>&gt; ORIGINAL SOURCE</span>
+          <span style="opacity:0.5;">INPUT</span>
+        </div>
+        <div class="panel-body" style="flex:1; justify-content:center;">
+          <div class="img-frame" style="height:100%;">
+            <img id="preview" alt="ORIGINAL IMAGE PREVIEW">
+            <div class="no-signal" id="srcSignal"><span>AWAITING SOURCE IMAGE</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="view-panel">
-    <div class="panel-header">
-      <span>&#62; VIEWFINDER</span>
-      <span class="info" id="resInfo">--x--</span>
+  <div class="workspace">
+    
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header">
+          <span>&gt; QR REGION</span>
+          <button id="downloadQr" class="btn outline" style="padding:2px 6px; font-size:0.6rem;" disabled>SAVE</button>
+        </div>
+        <div class="panel-body">
+          <div class="img-frame">
+            <canvas id="qrCanvas"></canvas>
+            <div class="no-signal" id="qrSignal"><span>NO QR STEP</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span>&gt; RED DOTS DEBUG</span>
+          <span style="opacity:0.5;">ANALYSIS</span>
+        </div>
+        <div class="panel-body">
+          <div class="img-frame">
+            <canvas id="debugCanvas"></canvas>
+            <div class="no-signal" id="debugSignal"><span>NO DATA</span></div>
+          </div>
+        </div>
+      </div>
     </div>
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="canvas"></canvas>
-    <div class="no-signal" id="noSignal"><span>NO SIGNAL</span></div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span>&gt; TEXT ROI (FROM 4 RED DOTS)</span>
+        <button id="downloadText" class="btn outline" style="padding:2px 6px; font-size:0.6rem;" disabled>SAVE CROP</button>
+      </div>
+      <div class="panel-body">
+        <div class="img-frame" style="min-height:140px;">
+          <canvas id="textCanvas"></canvas>
+          <div class="no-signal" id="textSignal"><span>AWAITING MARKERS</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span>&gt; OCR RECOGNITION MATRIX</span>
+        <span style="opacity:0.5;">OUTPUT</span>
+      </div>
+      <div class="panel-body">
+        <pre id="ocrResult" class="ocr-output empty">AWAITING ENGINE STAGE...</pre>
+      </div>
+    </div>
+
   </div>
-  
 </div>
+
 <div class="statusbar">
-  <span>C:\&gt; <span class="blink">&#9608;</span> CAMERA.SYS v1.0</span>
+  <span>C:\&gt; <span class="blink">&#9608;</span> QR-CROP.SYS v2.0</span>
   <span id="statusText">READY</span>
   <span id="statusTime"></span>
 </div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">SYSTEM ALERT</div>
+    <div class="modal-message" id="modalMessage">MESSAGE BODY</div>
+    <button class="btn" id="modalBtn" style="width:100%;">[ CLOSE ]</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@zxing/browser@latest"></script>
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+<script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
+
 <script>
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const noSignal = document.getElementById('noSignal');
-const gallery = document.getElementById('gallery');
-const captureBtn = document.getElementById('captureBtn');
-const saveBtn = document.getElementById('saveBtn');
-const clearBtn = document.getElementById('clearBtn');
-const switchBtn = document.getElementById('switchBtn');
-const pixelSelect = document.getElementById('pixelSelect');
-const errorMsg = document.getElementById('errorMsg');
-const camStatus = document.getElementById('camStatus');
-const resInfo = document.getElementById('resInfo');
-const countInfo = document.getElementById('countInfo');
-const statusText = document.getElementById('statusText');
-const statusTime = document.getElementById('statusTime');
+const file = document.getElementById("file");
+const preview = document.getElementById("preview");
+const qrCanvas = document.getElementById("qrCanvas");
+const debugCanvas = document.getElementById("debugCanvas");
+const textCanvas = document.getElementById("textCanvas");
+const downloadQr = document.getElementById("downloadQr");
+const downloadText = document.getElementById("downloadText");
+const ocrResult = document.getElementById("ocrResult");
+const dotInfo = document.getElementById("dotInfo");
+const modalOverlay = document.getElementById("modalOverlay");
+const modalTitle = document.getElementById("modalTitle");
+const modalMessage = document.getElementById("modalMessage");
+const modalBtn = document.getElementById("modalBtn");
+const statusText = document.getElementById("statusText");
+const statusTime = document.getElementById("statusTime");
 
-let stream = null;
-let photos = [];
-let mirrored = false;
-let cameraActive = false;
-let resolution = '640x480';
+// Signals
+const srcSignal = document.getElementById("srcSignal");
+const qrSignal = document.getElementById("qrSignal");
+const debugSignal = document.getElementById("debugSignal");
+const textSignal = document.getElementById("textSignal");
 
-function showError(msg) {
-  errorMsg.textContent = '! ' + msg;
-  errorMsg.classList.add('show');
-  setTimeout(() => errorMsg.classList.remove('show'), 3000);
+let currentObjectURL = null;
+
+function showModal(title, message) {
+  modalTitle.textContent = "! " + title;
+  modalMessage.textContent = message;
+  modalOverlay.classList.add("show");
 }
 
-async function startCamera() {
-  stopCamera();
-  try {
-    const [resW, resH] = resolution.split('x').map(Number);
-    stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: resW }, height: { ideal: resH }, aspectRatio: { ideal: resW / resH }, facingMode: 'environment' }, audio: false });
-    video.srcObject = stream;
-    await video.play();
-    cameraActive = true;
-    noSignal.classList.add('hide');
-    camStatus.textContent = 'ONLINE';
-    camStatus.style.opacity = '1';
-    statusText.textContent = 'CAMERA ONLINE';
-    captureBtn.disabled = false;
-    const track = stream.getVideoTracks()[0];
-    const settings = track.getSettings();
-    const w = settings.width || '?';
-    const h = settings.height || '?';
-    resInfo.textContent = w + 'x' + h;
-  } catch (e) {
-    cameraActive = false;
-    noSignal.classList.remove('hide');
-    camStatus.textContent = 'OFFLINE';
-    captureBtn.disabled = true;
-    statusText.textContent = 'NO CAMERA';
-    showError('CAMERA ERROR: ' + e.message);
+function hideModal() { modalOverlay.classList.remove("show"); }
+function setStatus(msg) { statusText.textContent = msg; }
+
+modalBtn.onclick = hideModal;
+modalOverlay.onclick = (e) => { if (e.target === modalOverlay) hideModal(); };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideModal(); });
+
+function revokeCurrentURL() {
+  if (currentObjectURL) {
+    URL.revokeObjectURL(currentObjectURL);
+    currentObjectURL = null;
   }
 }
 
-function stopCamera() {
-  if (stream) {
-    stream.getTracks().forEach(t => t.stop());
-    stream = null;
+function findRedDots(ctx, w, h) {
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+  const labels = new Int32Array(w * h).fill(-1);
+  const blobs = [];
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = (y * w + x);
+      const pi = idx * 4;
+      const r = data[pi], g = data[pi + 1], b = data[pi + 2];
+      const isRed = (r > 180 && g < 100 && b < 100 && (r - g) > 60 && (r - b) > 60);
+      if (!isRed || labels[idx] !== -1) continue;
+
+      const stack = [{x, y}];
+      const label = blobs.length;
+      labels[idx] = label;
+
+      let sx = 0, sy = 0, count = 0;
+      let bminX = x, bmaxX = x, bminY = y, bmaxY = y;
+
+      while (stack.length > 0) {
+        const {x: cx, y: cy} = stack.pop();
+        sx += cx; sy += cy; count++;
+        if (cx < bminX) bminX = cx;
+        if (cx > bmaxX) bmaxX = cx;
+        if (cy < bminY) bminY = cy;
+        if (cy > bmaxY) bmaxY = cy;
+        for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+          const nx = cx + dx, ny = cy + dy;
+          if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+          const nidx = ny * w + nx;
+          if (binaryCheck(data, nidx) && labels[nidx] === -1) {
+            labels[nidx] = label;
+            stack.push({x: nx, y: ny});
+          }
+        }
+      }
+
+      if (count > 0) {
+        blobs.push({
+          x: sx / count, y: sy / count, count,
+          minX: bminX, maxX: bmaxX, minY: bminY, maxY: bmaxY
+        });
+      }
+    }
   }
-  cameraActive = false;
+
+  const minArea = Math.max(4, w * h * 0.0002);
+  const maxArea = Math.max(100, w * h * 0.08);
+  let valid = blobs.filter(b => b.count >= minArea && b.count <= maxArea);
+  valid.sort((a, b) => b.count - a.count);
+  return valid.slice(0, 8);
 }
 
-function capturePhoto() {
-  if (!cameraActive) { showError('CAMERA OFFLINE'); return; }
-  const w = video.videoWidth || 640;
-  const h = video.videoHeight || 480;
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext('2d');
-  if (mirrored) {
-    ctx.translate(w, 0);
-    ctx.scale(-1, 1);
-  }
-  ctx.drawImage(video, 0, 0, w, h);
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-  photos.push(dataUrl);
-  updateGallery();
-  statusText.textContent = 'CAPTURED: ' + photos.length;
-  countInfo.textContent = photos.length + ' PHOTO(S)';
+function binaryCheck(data, idx) {
+  const pi = idx * 4;
+  return data[pi] > 180 && data[pi + 1] < 100 && data[pi + 2] < 100
+      && (data[pi] - data[pi + 1]) > 60 && (data[pi] - data[pi + 2]) > 60;
 }
 
-function updateGallery() {
-  gallery.innerHTML = '';
-  if (photos.length === 0) {
-    gallery.innerHTML = '<span class="empty">[ EMPTY ]</span>';
-    countInfo.textContent = '0 PHOTO(S)';
-    return;
-  }
-  photos.forEach((src, i) => {
-    const img = document.createElement('img');
-    img.src = src;
-    img.title = 'PHOTO #' + (i + 1);
-    img.addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.download = 'NINS_RECAMERA_' + (i + 1) + '_' + new Date().toISOString().slice(0,19).replace(/[:-]/g, '') + '.jpg';
-      link.download = `${new Date().toISOString()}--${Intl.DateTimeFormat().resolvedOptions().timeZone}.jpg`;
-      link.download = `${new Date().toISOString().replace(/[:.]/g, "-")}--${Intl.DateTimeFormat().resolvedOptions().timeZone.replaceAll("/", "-")}.jpg`;
+file.onchange = async (e) => {
+  const imgFile = e.target.files[0];
+  if (!imgFile) return;
 
-      link.href = src;
-      link.click();
+  revokeCurrentURL();
+
+  const img = new Image();
+  currentObjectURL = URL.createObjectURL(imgFile);
+  img.src = currentObjectURL;
+
+  img.onload = async () => {
+    preview.src = img.src;
+    srcSignal.classList.add("hide");
+    
+    ocrResult.textContent = "SYS: TESSERACT ENGINE INITIALIZING...";
+    ocrResult.classList.remove("empty");
+    
+    downloadQr.disabled = true;
+    downloadText.disabled = true;
+    
+    qrSignal.classList.remove("hide");
+    debugSignal.classList.remove("hide");
+    textSignal.classList.remove("hide");
+    
+    dotInfo.textContent = "SCANNING QR...";
+    setStatus("SCANNING QR MATRIX...");
+
+    // ── 1. QR Detection ──
+    const codeReader = new ZXing.BrowserQRCodeReader();
+    let qrPoints, qrText;
+
+    try {
+      const resultQR = await codeReader.decodeFromImageElement(img);
+      qrPoints = resultQR.resultPoints;
+      qrText = resultQR.getText();
+    } catch (err) {
+      showModal("DEVICE ERROR", "QR CODE MODULE NOT DETECTED IN IMAGE SEQUENCE.");
+      ocrResult.textContent = "FATAL: QR CODE NOT FOUND";
+      ocrResult.classList.add("empty");
+      dotInfo.textContent = "NO QR FOUND";
+      setStatus("ERROR");
+      return;
+    }
+
+    if (!qrPoints || qrPoints.length < 3) {
+      showModal("ARRAY ERROR", "QR DETECTED BUT LACKS VALID POSITION INDEX MARKS.");
+      ocrResult.textContent = "ERROR: POSITION POINTS UNDEFINED";
+      ocrResult.classList.add("empty");
+      dotInfo.textContent = "BAD INDEX MARKS";
+      setStatus("ERROR");
+      return;
+    }
+
+    // ── 2. Crop QR region ──
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    qrPoints.forEach(p => {
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
     });
-    gallery.prepend(img);
+
+    const qrPad = Math.max(20, Math.round((maxX - minX) * 0.12));
+    const sx = Math.max(0, minX - qrPad);
+    const sy = Math.max(0, minY - qrPad);
+    const sw = Math.min(img.width - sx, (maxX - minX) + qrPad * 2);
+    const sh = Math.min(img.height - sy, (maxY - minY) + qrPad * 2);
+
+    qrCanvas.width = sw;
+    qrCanvas.height = sh;
+    const qrCtx = qrCanvas.getContext("2d");
+    qrCtx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+    qrSignal.classList.add("hide");
+
+    dotInfo.textContent = `QR OK: ${qrText.slice(0,15)}... | RES: ${sw}x${sh}`;
+    setStatus("QR CAPTURED, TRACKING TARGET MARKERS...");
+
+    // ── 3. Red dot detection ──
+    const dots = findRedDots(qrCtx, sw, sh);
+
+    debugCanvas.width = sw;
+    debugCanvas.height = sh;
+    const debugCtx = debugCanvas.getContext("2d");
+    debugCtx.drawImage(qrCanvas, 0, 0);
+    debugCtx.strokeStyle = "#000000"; // 改為黑線
+    debugCtx.lineWidth = 2;
+    debugSignal.classList.add("hide");
+
+    dots.forEach((d, i) => {
+      debugCtx.strokeStyle = "#000000"; // 改為黑線
+      debugCtx.strokeRect(d.minX, d.minY, d.maxX - d.minX + 1, d.maxY - d.minY + 1);
+      debugCtx.beginPath();
+      debugCtx.arc(d.x, d.y, 4, 0, Math.PI * 2);
+      debugCtx.stroke();
+      debugCtx.fillStyle = "#000000"; // 改為黑字
+      debugCtx.font = "10px monospace";
+      debugCtx.fillText(`#${i}`, d.x + 6, d.y - 6);
+    });
+
+    // ── 4. Select best 4 dots ──
+    if (dots.length < 4) {
+      dotInfo.textContent = `MARKERS FETCH FAILED: ${dots.length}/4 FOUND`;
+      ocrResult.textContent = `CRITICAL: INSUFFICIENT RED TARGET MARKERS (${dots.length}/4)`;
+      ocrResult.classList.add("empty");
+      setStatus("ERROR: MARKERS MISSING");
+      return;
+    }
+
+    const corners = pick4Corners(dots);
+    dotInfo.textContent += ` | DOTS: ${dots.length}`;
+
+    corners.forEach((d, i) => {
+      debugCtx.strokeStyle = "#000000"; // 統一改為黑線
+      debugCtx.strokeRect(d.minX, d.minY, d.maxX - d.minX + 1, d.maxY - d.minY + 1);
+    });
+
+    // ── 5. Compute text bounding box ──
+    const [tl, tr, br, bl] = corners;
+    let textX = Math.max(tl.maxX, bl.maxX);
+    let textY = Math.max(tl.maxY, tr.maxY);
+    let textW = Math.min(tr.minX, br.minX) - textX;
+    let textH = Math.min(br.minY, bl.minY) - textY;
+
+    if (textW <= 0 || textH <= 0) {
+      const xs = corners.map(d => d.x);
+      const ys = corners.map(d => d.y);
+      const cMinX = Math.min(...xs), cMaxX = Math.max(...xs);
+      const cMinY = Math.min(...ys), cMaxY = Math.max(...ys);
+      const fpad = 2;
+      textX = Math.max(0, cMinX - fpad);
+      textY = Math.max(0, cMinY - fpad);
+      textW = Math.min(sw - textX, cMaxX - cMinX + fpad * 2);
+      textH = Math.min(sh - textY, cMaxY - cMinY + fpad * 2);
+    }
+
+    textCanvas.width = textW;
+    textCanvas.height = textH;
+    const textCtx = textCanvas.getContext("2d");
+    textCtx.fillStyle = "#FFFFFF";
+    textCtx.fillRect(0, 0, textW, textH);
+    textCtx.drawImage(qrCanvas, textX, textY, textW, textH, 0, 0, textW, textH);
+    textSignal.classList.add("hide");
+
+    debugCtx.strokeStyle = "#000000"; // 改為黑虛線
+    debugCtx.lineWidth = 1;
+    debugCtx.setLineDash([3, 3]);
+    debugCtx.strokeRect(textX, textY, textW, textH);
+    debugCtx.setLineDash([]);
+
+    setStatus("TEXT ROI EXTRACTED, PROCESSING OCR ENGINE...");
+
+    // ── 6. OCR ──
+    textCanvas.toBlob(async blob => {
+      downloadQr.disabled = false;
+      downloadText.disabled = false;
+
+      try {
+        const { data: { words } } = await Tesseract.recognize(blob, "eng", {
+          tessedit_ocr_engine_mode: "1",
+          tessedit_pageseg_mode: "7",
+          preserve_interword_spaces: "1"
+        });
+
+        const CONFIDENCE_THRESHOLD = 30;
+        const highConfWords = words.filter(w => w.confidence >= CONFIDENCE_THRESHOLD);
+        let resultText = highConfWords.map(w => w.text).join(" ").trim();
+        resultText = resultText.replace(/\s+/g, '');
+
+        if (resultText) {
+          ocrResult.textContent = resultText;
+          ocrResult.classList.remove("empty");
+          setStatus("MATRIX PROCESS COMPLETED: SUCCESS");
+        } else {
+          ocrResult.textContent = "WARN: UNABLE TO DECODE WITH REASONABLE CONFIDENCE";
+          ocrResult.classList.add("empty");
+          setStatus("LOW CONFIDENCE INTERPRETATION");
+        }
+      } catch (e) {
+        console.error(e);
+        ocrResult.textContent = "CORE ERROR: RECOGNITION FAILURE\n" + e.message;
+        ocrResult.classList.add("empty");
+        setStatus("ENGINE RECOGNITION ERROR");
+      }
+    });
+  };
+
+  img.onerror = () => {
+    showModal("IO ERROR", "UNABLE TO PARSE TARGET BINARY STREAM.");
+    setStatus("DEVICE ERROR");
+  };
+};
+
+function pick4Corners(dots) {
+  const cx = dots.reduce((s, d) => s + d.x, 0) / dots.length;
+  const cy = dots.reduce((s, d) => s + d.y, 0) / dots.length;
+
+  const scored = dots.map(d => ({
+    ...d,
+    dist: Math.sqrt((d.x - cx) ** 2 + (d.y - cy) ** 2),
+    angle: Math.atan2(d.y - cy, d.x - cx)
+  }));
+  scored.sort((a, b) => b.dist - a.dist);
+
+  const top4 = scored.slice(0, 4);
+  const quad = { tl: null, tr: null, br: null, bl: null };
+  top4.forEach(d => {
+    if (d.x < cx && d.y < cy) quad.tl = d;
+    else if (d.x >= cx && d.y < cy) quad.tr = d;
+    else if (d.x >= cx && d.y >= cy) quad.br = d;
+    else quad.bl = d;
   });
-  const first = gallery.firstElementChild;
-  if (first) first.classList.add('newest');
+
+  const result = [quad.tl, quad.tr, quad.br, quad.bl].filter(Boolean);
+  if (result.length >= 4) return result;
+  return top4.slice(0, 4);
 }
 
-function saveLatest() {
-  ///return;
-  if (photos.length === 0) { showError('NO PHOTO TO SAVE'); return; }
-  const link = document.createElement('a');
-  link.download = 'NINS_RECAMERA_X_' + new Date().toISOString().slice(0,19).replace(/[:-]/g, '') + '.jpg';
-  link.download = `${new Date().toISOString()}-${Intl.DateTimeFormat().resolvedOptions().timeZone}.jpg`;
-  link.download = `${new Date().toISOString().replace(/[:.]/g, "-")}--${Intl.DateTimeFormat().resolvedOptions().timeZone.replaceAll("/", "-")}.jpg`;
-  
-  link.href = photos[photos.length - 1];
+downloadQr.onclick = () => {
+  const link = document.createElement("a");
+  link.download = "qr-matrix_crop.png";
+  link.href = qrCanvas.toDataURL("image/png");
   link.click();
-  statusText.textContent = 'FILE SAVED';
-}
+};
 
-function clearAll() {
-  if (photos.length === 0) return;
-  photos = [];
-  updateGallery();
-  statusText.textContent = 'GALLERY CLEARED';
-}
-
-function toggleMirror() {
-  mirrored = !mirrored;
-  switchBtn.textContent = mirrored ? 'MIRROR' : 'MIRROR';
-  if (mirrored) video.style.transform = 'scaleX(-1)';
-  else video.style.transform = 'none';
-  statusText.textContent = mirrored ? 'MIRROR ON' : 'MIRROR OFF';
-}
-
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); capturePhoto(); }
-  if (e.key === ' ' && document.activeElement === document.body) { e.preventDefault(); capturePhoto(); }
-});
-
-let savedPhotos = [];
-try {
-  const saved = localStorage.getItem('recamera_photos');
-  if (saved) { savedPhotos = JSON.parse(saved); }
-} catch(e) {}
-
-video.addEventListener('click', capturePhoto);
-video.addEventListener('touchend', e => { e.preventDefault(); capturePhoto(); });
-captureBtn.addEventListener('click', capturePhoto);
-saveBtn.addEventListener('click', saveLatest);
-clearBtn.addEventListener('click', clearAll);
-switchBtn.addEventListener('click', toggleMirror);
-pixelSelect.addEventListener('change', () => {
-  resolution = pixelSelect.value;
-  resInfo.textContent = resolution.replace('x', '\u00D7');
-  startCamera();
-});
-
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden && cameraActive) { stopCamera(); }
-  if (!document.hidden) { startCamera(); }
-});
+downloadText.onclick = () => {
+  const link = document.createElement("a");
+  link.download = "text-roi_crop.png";
+  link.href = textCanvas.toDataURL("image/png");
+  link.click();
+};
 
 function updateClock() {
   const now = new Date();
@@ -351,7 +572,7 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
-startCamera();
+window.addEventListener("beforeunload", revokeCurrentURL);
 </script>
 </body>
 </html>
