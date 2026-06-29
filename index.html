@@ -9,7 +9,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: 'Courier New', 'Consolas', monospace;
-  background: #fff; color: #000; height: 100vh; display: flex; flex-direction: column;
+  background: #fff; color: #000; min-height: 100vh; display: flex; flex-direction: column;
   cursor: default;
 }
 ::selection { background: #000; color: #fff; }
@@ -18,6 +18,7 @@ body {
 ::-webkit-scrollbar-thumb { background: #000; border-radius: 0; }
 ::-webkit-scrollbar-thumb:hover { background: #333; }
 
+/* 工具列：支援手機換行，固定置頂 */
 .toolbar {
   display: flex; align-items: center; gap: 6px;
   padding: 8px 12px; background: #fff;
@@ -48,17 +49,21 @@ body {
 .btn.outline:hover { opacity: 1; background: #000; color: #fff; }
 .btn.active { background: #000; color: #fff; }
 
-.main { flex: 1; display: grid; grid-template-columns: 1fr; overflow: hidden; }
-
-@media (min-width: 992px) {
-  .main { grid-template-columns: 380px 1fr; }
-}
+/* 統一手機排版規格：垂直單欄，允許上下滑動 */
+.main { flex: 1; display: flex; flex-direction: column; overflow: visible; padding: 12px; gap: 12px; }
 
 .sidebar { 
-  border-right: 2px solid #000; display: flex; flex-direction: column; 
-  background: #fff; overflow-y: auto;
+  border-right: none; display: flex; flex-direction: column; 
+  background: #fff; overflow: visible;
 }
-.workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 12px; gap: 12px; }
+.workspace { display: flex; flex-direction: column; overflow: visible; gap: 12px; }
+
+/* 網格區塊：手機版一律維持單欄流動，大螢幕才切換為雙欄 */
+.grid-2 { display: grid; grid-template-columns: 1fr; gap: 8px; }
+
+@media (min-width: 768px) {
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+}
 
 .panel { display: flex; flex-direction: column; border: 1px solid #000; margin-bottom: 4px; }
 .panel-header {
@@ -69,13 +74,28 @@ body {
 }
 .panel-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 
-.img-frame {
-  border: 1px solid #000; background: #fafafa; display: flex; 
-  align-items: center; justify-content: center; min-height: 120px; position: relative;
-  overflow: hidden;
-}
+/* 圖片框架優化：符合手機垂直高度，避免單一元件佔滿整個螢幕 */
+/* 修改這段樣式，限制最大高度不突破手機視窗 */
 .img-frame video, .img-frame canvas {
-  max-width: 100%; max-height: 320px; object-fit: contain; display: block;
+  width: 100%;
+  max-width: 100%;
+  /* 改用 vh (Viewport Height) 限制，確保高度不超過手機螢幕的 30%，絕對不會撐破窗口 */
+  max-height: 30vh; 
+  object-fit: contain; 
+  display: block;
+}
+
+/* 確保外層框架也能自適應縮放，且不溢出 */
+.img-frame {
+  border: 1px solid #000; 
+  background: #fafafa; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  min-height: 120px; 
+  max-height: 32vh; /* 稍微大於內層元件，提供安全邊界 */
+  position: relative;
+  overflow: hidden;
 }
 
 .no-signal {
@@ -95,13 +115,11 @@ body {
 }
 .ocr-output.empty { color: #888; font-style: italic; }
 
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
 .statusbar {
   display: flex; align-items: center; justify-content: space-between;
   padding: 6px 12px; background: #f0f0f0; border-top: 3px double #000;
   font-size: 0.65rem; color: #000; text-transform: uppercase; letter-spacing: 1px;
-  font-weight: bold;
+  font-weight: bold; margin-top: auto;
 }
 .statusbar .blink { animation: blink 1s step-end infinite; }
 
@@ -121,7 +139,7 @@ body {
   <h1>C:\&gt;<span class="cursor-blink">&#9608;</span></h1>
   <div style="font-size:0.75rem; font-weight:bold; letter-spacing:1px; margin-right:12px;">QR-LIVE.SYS v2.5</div>
   
-  <button id="videoBtn" class="btn">[ F2: START CAMERA ]</button>
+  <button id="videoBtn" class="btn">[ START CAMERA ]</button>
   
   <span id="dotInfo" style="font-size:0.65rem; color:#666; margin-left:auto; letter-spacing:1px; text-transform:uppercase;">STANDBY</span>
 </div>
@@ -130,13 +148,13 @@ body {
   
   <div class="sidebar">
     <div class="workspace">
-      <div class="panel" style="flex:1; min-height:200px;">
+      <div class="panel" style="min-height:200px;">
         <div class="panel-header">
           <span>&gt; LIVE CAMERA FEED</span>
           <span style="opacity:0.5;">INPUT</span>
         </div>
-        <div class="panel-body" style="flex:1; justify-content:center;">
-          <div class="img-frame" style="height:100%;">
+        <div class="panel-body" style="justify-content:center;">
+          <div class="img-frame">
             <video id="videoFeed" autoplay playsinline muted style="width:100%; height:100%;"></video>
             <div class="no-signal" id="srcSignal"><span>AWAITING CAMERA STREAM</span></div>
           </div>
@@ -236,7 +254,6 @@ const modalBtn = document.getElementById("modalBtn");
 const statusText = document.getElementById("statusText");
 const statusTime = document.getElementById("statusTime");
 
-// Signals
 const srcSignal = document.getElementById("srcSignal");
 const qrSignal = document.getElementById("qrSignal");
 const debugSignal = document.getElementById("debugSignal");
@@ -244,7 +261,7 @@ const textSignal = document.getElementById("textSignal");
 
 let codeReader = null;
 let isScanning = false;
-let ocrProcessing = false; // 防止重複執行 OCR 造成阻塞
+let ocrProcessing = false;
 
 function showModal(title, message) {
   modalTitle.textContent = "! " + title;
@@ -256,7 +273,6 @@ function setStatus(msg) { statusText.textContent = msg; }
 
 modalBtn.onclick = hideModal;
 
-// 初始化 ZXing
 codeReader = new ZXing.BrowserQRCodeReader();
 
 videoBtn.onclick = async () => {
@@ -270,14 +286,13 @@ videoBtn.onclick = async () => {
 async function startScanning() {
   try {
     isScanning = true;
-    videoBtn.textContent = "[ F2: STOP CAMERA ]";
+    videoBtn.textContent = "[ STOP CAMERA ]";
     videoBtn.classList.add("active");
     srcSignal.classList.add("hide");
     setStatus("INITIALIZING CAMERA...");
     ocrResult.textContent = "SYS: TESSERACT ENGINE STANDBY...";
     ocrResult.classList.remove("empty");
 
-    // 呼叫鏡頭並持續解碼偵測
     await codeReader.decodeFromVideoDevice(undefined, videoFeed, (result, error) => {
       if (result) {
         processFrame(result);
@@ -296,7 +311,7 @@ async function startScanning() {
 
 function stopScanning() {
   isScanning = false;
-  videoBtn.textContent = "[ F2: START CAMERA ]";
+  videoBtn.textContent = "[ START CAMERA ]";
   videoBtn.classList.remove("active");
   srcSignal.classList.remove("hide");
   qrSignal.classList.remove("hide");
@@ -305,17 +320,15 @@ function stopScanning() {
   dotInfo.textContent = "STANDBY";
   setStatus("READY");
   
-  codeReader.reset(); // 停止視訊串流與解碼
+  codeReader.reset();
 }
 
-// 核心處理邏輯：當辨識到 QR 碼時觸發
 function processFrame(resultQR) {
   const qrPoints = resultQR.resultPoints;
   const qrText = resultQR.getText();
 
   if (!qrPoints || qrPoints.length < 3) return;
 
-  // 1. 計算 QR 範圍並裁切
   let minX = Infinity, maxX = -Infinity;
   let minY = Infinity, maxY = -Infinity;
   qrPoints.forEach(p => {
@@ -323,7 +336,6 @@ function processFrame(resultQR) {
     minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
   });
 
-  // 這裡需要透過隱藏的 canvas 抓取當前 video 影格
   const vW = videoFeed.videoWidth;
   const vH = videoFeed.videoHeight;
   if (!vW || !vH) return;
@@ -349,7 +361,6 @@ function processFrame(resultQR) {
   dotInfo.textContent = `QR OK: ${qrText.slice(0,10)}... | RES: ${sw}x${sh}`;
   setStatus("TRACKING TARGET MARKERS...");
 
-  // 2. 紅點偵測與 Debug 繪製
   const dots = findRedDots(qrCtx, sw, sh);
 
   debugCanvas.width = sw;
@@ -383,7 +394,6 @@ function processFrame(resultQR) {
     debugCtx.strokeRect(d.minX, d.minY, d.maxX - d.minX + 1, d.maxY - d.minY + 1);
   });
 
-  // 3. 提取文字範圍 (ROI)
   const [tl, tr, br, bl] = corners;
   let textX = Math.max(tl.maxX, bl.maxX);
   let textY = Math.max(tl.maxY, tr.maxY);
@@ -416,7 +426,6 @@ function processFrame(resultQR) {
   debugCtx.strokeRect(textX, textY, textW, textH);
   debugCtx.setLineDash([]);
 
-  // 4. 進行 OCR 辨識 (加鎖防止即時影像太卡)
   if (ocrProcessing) return;
   ocrProcessing = true;
   setStatus("PROCESSING OCR ENGINE...");
@@ -449,7 +458,7 @@ function processFrame(resultQR) {
     } catch (e) {
       console.error(e);
     } finally {
-      ocrProcessing = false; // 解鎖，準備下一次辨識
+      ocrProcessing = false;
     }
   });
 }
@@ -465,7 +474,7 @@ function findRedDots(ctx, w, h) {
       const idx = (y * w + x);
       const pi = idx * 4;
       const r = data[pi], g = data[pi + 1], b = data[pi + 2];
-      const isRed = (r > 160 && g < 110 && b < 110 && (r - g) > 50 && (r - b) > 50); // 稍微放寬即時影像的濾鏡標準
+      const isRed = (r > 160 && g < 110 && b < 110 && (r - g) > 50 && (r - b) > 50);
       if (!isRed || labels[idx] !== -1) continue;
 
       const stack = [{x, y}];
