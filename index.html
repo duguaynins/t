@@ -76,24 +76,24 @@ body {
 
 /* 圖片框架優化：符合手機垂直高度，避免單一元件佔滿整個螢幕 */
 /* 修改這段樣式，限制最大高度不突破手機視窗 */
+/* 修正：允許影片與畫布根據自身比例正常展開拉伸，不再限制 max-height */
 .img-frame video, .img-frame canvas {
   width: 100%;
+  height: auto;          /* 修正：改成 auto 讓它根據比例自動計算高度 */
   max-width: 100%;
-  /* 改用 vh (Viewport Height) 限制，確保高度不超過手機螢幕的 30%，絕對不會撐破窗口 */
-  max-height: 30vh; 
   object-fit: contain; 
   display: block;
 }
 
-/* 確保外層框架也能自適應縮放，且不溢出 */
+/* 修正：外層框架解除 vh 限制，改為由內容（影片）高度撐開，實現完美拉伸 */
 .img-frame {
   border: 1px solid #000; 
   background: #fafafa; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
-  min-height: 120px; 
-  max-height: 32vh; /* 稍微大於內層元件，提供安全邊界 */
+  min-height: 140px;    /* 給予基本的低消高度 */
+  max-height: none;     /* 修正：取消高度鎖定 */
   position: relative;
   overflow: hidden;
 }
