@@ -283,6 +283,7 @@ videoBtn.onclick = async () => {
   }
 };
 
+let controls;  ///***
 async function startScanning() {
   try {
     isScanning = true;
@@ -293,7 +294,7 @@ async function startScanning() {
     ocrResult.textContent = "SYS: TESSERACT ENGINE STANDBY...";
     ocrResult.classList.remove("empty");
 
-    await codeReader.decodeFromVideoDevice(undefined, videoFeed, (result, error) => {
+    controls = await codeReader.decodeFromVideoDevice(undefined, videoFeed, (result, error) => {
       if (result) {
         processFrame(result);
       }
@@ -321,6 +322,8 @@ function stopScanning() {
   setStatus("READY");
   
   codeReader.reset();
+  controls.stop();
+  videoFeed.srcObject = null;
 }
 
 function processFrame(resultQR) {
@@ -450,6 +453,14 @@ function processFrame(resultQR) {
         ocrResult.textContent = resultText;
         ocrResult.classList.remove("empty");
         setStatus("MATRIX PROCESS COMPLETED");
+        const check = `https://${resultText}`;
+
+        if (qrText.startsWith(check)) {
+            ///console.log("符合");
+            stopScanning();
+        } else {
+            ///console.log("不符合");
+        }
       } else {
         ocrResult.textContent = "WARN: LOW CONFIDENCE SCAN...";
         ocrResult.classList.add("empty");
