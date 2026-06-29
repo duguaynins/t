@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>nins / QR-CROP.SYS</title>
+<title>nins / QR-CROP.SYS (LIVE)</title>
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,7 +32,7 @@ body {
 .toolbar .cursor-blink { animation: blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-.btn, .file-label {
+.btn {
   display: inline-block;
   background: #fff; color: #000; border: 2px solid #000;
   padding: 5px 12px; cursor: pointer; font-size: 0.7rem;
@@ -41,11 +41,12 @@ body {
   transition: none; font-weight: bold;
   text-align: center;
 }
-.btn:hover:not(:disabled), .file-label:hover { background: #000; color: #fff; }
+.btn:hover:not(:disabled) { background: #000; color: #fff; }
 .btn:active:not(:disabled) { background: #333; color: #fff; }
 .btn:disabled { opacity: .3; cursor: not-allowed; border-style: dashed; }
 .btn.outline { opacity: .7; }
 .btn.outline:hover { opacity: 1; background: #000; color: #fff; }
+.btn.active { background: #000; color: #fff; }
 
 .main { flex: 1; display: grid; grid-template-columns: 1fr; overflow: hidden; }
 
@@ -73,7 +74,7 @@ body {
   align-items: center; justify-content: center; min-height: 120px; position: relative;
   overflow: hidden;
 }
-.img-frame img, .img-frame canvas {
+.img-frame video, .img-frame canvas {
   max-width: 100%; max-height: 320px; object-fit: contain; display: block;
 }
 
@@ -81,6 +82,7 @@ body {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   display: flex; align-items: center; justify-content: center;
   background: #fff; color: #888; font-size: 0.75rem; letter-spacing: 2px;
+  z-index: 2;
 }
 .no-signal span { border: 1px dashed #888; padding: 4px 8px; }
 .no-signal.hide { display: none; }
@@ -103,13 +105,6 @@ body {
 }
 .statusbar .blink { animation: blink 1s step-end infinite; }
 
-.error-msg {
-  display: none; padding: 8px 12px; background: #000; color: #fff;
-  font-size: 0.7rem; border-bottom: 3px double #000; font-weight: bold;
-}
-.error-msg.show { display: block; }
-
-/* Modal Dynamic */
 .modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(255,255,255,0.9); display: none; align-items: center; justify-content: center; z-index: 1000;
@@ -124,17 +119,12 @@ body {
 
 <div class="toolbar">
   <h1>C:\&gt;<span class="cursor-blink">&#9608;</span></h1>
-  <div style="font-size:0.75rem; font-weight:bold; letter-spacing:1px; margin-right:12px;">QR-CROP.SYS v2.0</div>
+  <div style="font-size:0.75rem; font-weight:bold; letter-spacing:1px; margin-right:12px;">QR-LIVE.SYS v2.5</div>
   
-  <div class="file-input-wrapper" style="position:relative;">
-    <input type="file" id="file" accept="image/*" capture="environment" style="position:absolute;width:0.1px;height:0.1px;opacity:0;overflow:hidden;z-index:-1;">
-    <label for="file" class="file-label">[ F2: SELECT IMAGE ]</label>
-  </div>
+  <button id="videoBtn" class="btn">[ F2: START CAMERA ]</button>
   
   <span id="dotInfo" style="font-size:0.65rem; color:#666; margin-left:auto; letter-spacing:1px; text-transform:uppercase;">STANDBY</span>
 </div>
-
-<div class="error-msg" id="errorMsg">ERROR</div>
 
 <div class="main">
   
@@ -142,13 +132,13 @@ body {
     <div class="workspace">
       <div class="panel" style="flex:1; min-height:200px;">
         <div class="panel-header">
-          <span>&gt; ORIGINAL SOURCE</span>
+          <span>&gt; LIVE CAMERA FEED</span>
           <span style="opacity:0.5;">INPUT</span>
         </div>
         <div class="panel-body" style="flex:1; justify-content:center;">
           <div class="img-frame" style="height:100%;">
-            <img id="preview" alt="ORIGINAL IMAGE PREVIEW">
-            <div class="no-signal" id="srcSignal"><span>AWAITING SOURCE IMAGE</span></div>
+            <video id="videoFeed" autoplay playsinline muted style="width:100%; height:100%;"></video>
+            <div class="no-signal" id="srcSignal"><span>AWAITING CAMERA STREAM</span></div>
           </div>
         </div>
       </div>
@@ -212,7 +202,7 @@ body {
 </div>
 
 <div class="statusbar">
-  <span>C:\&gt; <span class="blink">&#9608;</span> QR-CROP.SYS v2.0</span>
+  <span>C:\&gt; <span class="blink">&#9608;</span> QR-LIVE.SYS v2.5</span>
   <span id="statusText">READY</span>
   <span id="statusTime"></span>
 </div>
@@ -230,8 +220,8 @@ body {
 <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <script>
-const file = document.getElementById("file");
-const preview = document.getElementById("preview");
+const videoBtn = document.getElementById("videoBtn");
+const videoFeed = document.getElementById("videoFeed");
 const qrCanvas = document.getElementById("qrCanvas");
 const debugCanvas = document.getElementById("debugCanvas");
 const textCanvas = document.getElementById("textCanvas");
@@ -252,26 +242,216 @@ const qrSignal = document.getElementById("qrSignal");
 const debugSignal = document.getElementById("debugSignal");
 const textSignal = document.getElementById("textSignal");
 
-let currentObjectURL = null;
+let codeReader = null;
+let isScanning = false;
+let ocrProcessing = false; // 防止重複執行 OCR 造成阻塞
 
 function showModal(title, message) {
   modalTitle.textContent = "! " + title;
   modalMessage.textContent = message;
   modalOverlay.classList.add("show");
 }
-
 function hideModal() { modalOverlay.classList.remove("show"); }
 function setStatus(msg) { statusText.textContent = msg; }
 
 modalBtn.onclick = hideModal;
-modalOverlay.onclick = (e) => { if (e.target === modalOverlay) hideModal(); };
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideModal(); });
 
-function revokeCurrentURL() {
-  if (currentObjectURL) {
-    URL.revokeObjectURL(currentObjectURL);
-    currentObjectURL = null;
+// 初始化 ZXing
+codeReader = new ZXing.BrowserQRCodeReader();
+
+videoBtn.onclick = async () => {
+  if (isScanning) {
+    stopScanning();
+  } else {
+    await startScanning();
   }
+};
+
+async function startScanning() {
+  try {
+    isScanning = true;
+    videoBtn.textContent = "[ F2: STOP CAMERA ]";
+    videoBtn.classList.add("active");
+    srcSignal.classList.add("hide");
+    setStatus("INITIALIZING CAMERA...");
+    ocrResult.textContent = "SYS: TESSERACT ENGINE STANDBY...";
+    ocrResult.classList.remove("empty");
+
+    // 呼叫鏡頭並持續解碼偵測
+    await codeReader.decodeFromVideoDevice(undefined, videoFeed, (result, error) => {
+      if (result) {
+        processFrame(result);
+      }
+      if (error && !(error instanceof ZXing.NotFoundException)) {
+        console.error(error);
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    showModal("CAMERA ERROR", "UNABLE TO ACCESS MEDIA VIDEO DEVICE.");
+    stopScanning();
+  }
+}
+
+function stopScanning() {
+  isScanning = false;
+  videoBtn.textContent = "[ F2: START CAMERA ]";
+  videoBtn.classList.remove("active");
+  srcSignal.classList.remove("hide");
+  qrSignal.classList.remove("hide");
+  debugSignal.classList.remove("hide");
+  textSignal.classList.remove("hide");
+  dotInfo.textContent = "STANDBY";
+  setStatus("READY");
+  
+  codeReader.reset(); // 停止視訊串流與解碼
+}
+
+// 核心處理邏輯：當辨識到 QR 碼時觸發
+function processFrame(resultQR) {
+  const qrPoints = resultQR.resultPoints;
+  const qrText = resultQR.getText();
+
+  if (!qrPoints || qrPoints.length < 3) return;
+
+  // 1. 計算 QR 範圍並裁切
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+  qrPoints.forEach(p => {
+    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+  });
+
+  // 這裡需要透過隱藏的 canvas 抓取當前 video 影格
+  const vW = videoFeed.videoWidth;
+  const vH = videoFeed.videoHeight;
+  if (!vW || !vH) return;
+
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = vW;
+  tempCanvas.height = vH;
+  const tempCtx = tempCanvas.getContext("2d");
+  tempCtx.drawImage(videoFeed, 0, 0, vW, vH);
+
+  const qrPad = Math.max(20, Math.round((maxX - minX) * 0.12));
+  const sx = Math.max(0, minX - qrPad);
+  const sy = Math.max(0, minY - qrPad);
+  const sw = Math.min(vW - sx, (maxX - minX) + qrPad * 2);
+  const sh = Math.min(vH - sy, (maxY - minY) + qrPad * 2);
+
+  qrCanvas.width = sw;
+  qrCanvas.height = sh;
+  const qrCtx = qrCanvas.getContext("2d");
+  qrCtx.drawImage(tempCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
+  qrSignal.classList.add("hide");
+
+  dotInfo.textContent = `QR OK: ${qrText.slice(0,10)}... | RES: ${sw}x${sh}`;
+  setStatus("TRACKING TARGET MARKERS...");
+
+  // 2. 紅點偵測與 Debug 繪製
+  const dots = findRedDots(qrCtx, sw, sh);
+
+  debugCanvas.width = sw;
+  debugCanvas.height = sh;
+  const debugCtx = debugCanvas.getContext("2d");
+  debugCtx.drawImage(qrCanvas, 0, 0);
+  debugSignal.classList.add("hide");
+
+  dots.forEach((d, i) => {
+    debugCtx.strokeStyle = "#000000";
+    debugCtx.lineWidth = 2;
+    debugCtx.strokeRect(d.minX, d.minY, d.maxX - d.minX + 1, d.maxY - d.minY + 1);
+    debugCtx.beginPath();
+    debugCtx.arc(d.x, d.y, 4, 0, Math.PI * 2);
+    debugCtx.stroke();
+    debugCtx.fillStyle = "#000000";
+    debugCtx.font = "10px monospace";
+    debugCtx.fillText(`#${i}`, d.x + 6, d.y - 6);
+  });
+
+  if (dots.length < 4) {
+    dotInfo.textContent = `MARKERS FETCH FAILED: ${dots.length}/4 FOUND`;
+    return;
+  }
+
+  const corners = pick4Corners(dots);
+  dotInfo.textContent += ` | DOTS: ${dots.length}`;
+
+  corners.forEach(d => {
+    debugCtx.strokeStyle = "#000000";
+    debugCtx.strokeRect(d.minX, d.minY, d.maxX - d.minX + 1, d.maxY - d.minY + 1);
+  });
+
+  // 3. 提取文字範圍 (ROI)
+  const [tl, tr, br, bl] = corners;
+  let textX = Math.max(tl.maxX, bl.maxX);
+  let textY = Math.max(tl.maxY, tr.maxY);
+  let textW = Math.min(tr.minX, br.minX) - textX;
+  let textH = Math.min(br.minY, bl.minY) - textY;
+
+  if (textW <= 0 || textH <= 0) {
+    const xs = corners.map(d => d.x);
+    const ys = corners.map(d => d.y);
+    const cMinX = Math.min(...xs), cMaxX = Math.max(...xs);
+    const cMinY = Math.min(...ys), cMaxY = Math.max(...ys);
+    const fpad = 2;
+    textX = Math.max(0, cMinX - fpad);
+    textY = Math.max(0, cMinY - fpad);
+    textW = Math.min(sw - textX, cMaxX - cMinX + fpad * 2);
+    textH = Math.min(sh - textY, cMaxY - cMinY + fpad * 2);
+  }
+
+  textCanvas.width = textW;
+  textCanvas.height = textH;
+  const textCtx = textCanvas.getContext("2d");
+  textCtx.fillStyle = "#FFFFFF";
+  textCtx.fillRect(0, 0, textW, textH);
+  textCtx.drawImage(qrCanvas, textX, textY, textW, textH, 0, 0, textW, textH);
+  textSignal.classList.add("hide");
+
+  debugCtx.strokeStyle = "#000000";
+  debugCtx.lineWidth = 1;
+  debugCtx.setLineDash([3, 3]);
+  debugCtx.strokeRect(textX, textY, textW, textH);
+  debugCtx.setLineDash([]);
+
+  // 4. 進行 OCR 辨識 (加鎖防止即時影像太卡)
+  if (ocrProcessing) return;
+  ocrProcessing = true;
+  setStatus("PROCESSING OCR ENGINE...");
+
+  textCanvas.toBlob(async blob => {
+    downloadQr.disabled = false;
+    downloadText.disabled = false;
+
+    try {
+      const { data: { words } } = await Tesseract.recognize(blob, "eng", {
+        tessedit_ocr_engine_mode: "1",
+        tessedit_pageseg_mode: "7",
+        preserve_interword_spaces: "1"
+      });
+
+      const CONFIDENCE_THRESHOLD = 30;
+      const highConfWords = words.filter(w => w.confidence >= CONFIDENCE_THRESHOLD);
+      let resultText = highConfWords.map(w => w.text).join(" ").trim();
+      resultText = resultText.replace(/\s+/g, '');
+
+      if (resultText) {
+        ocrResult.textContent = resultText;
+        ocrResult.classList.remove("empty");
+        setStatus("MATRIX PROCESS COMPLETED");
+      } else {
+        ocrResult.textContent = "WARN: LOW CONFIDENCE SCAN...";
+        ocrResult.classList.add("empty");
+        setStatus("SCANNING...");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      ocrProcessing = false; // 解鎖，準備下一次辨識
+    }
+  });
 }
 
 function findRedDots(ctx, w, h) {
@@ -285,7 +465,7 @@ function findRedDots(ctx, w, h) {
       const idx = (y * w + x);
       const pi = idx * 4;
       const r = data[pi], g = data[pi + 1], b = data[pi + 2];
-      const isRed = (r > 180 && g < 100 && b < 100 && (r - g) > 60 && (r - b) > 60);
+      const isRed = (r > 160 && g < 110 && b < 110 && (r - g) > 50 && (r - b) > 50); // 稍微放寬即時影像的濾鏡標準
       if (!isRed || labels[idx] !== -1) continue;
 
       const stack = [{x, y}];
@@ -322,7 +502,7 @@ function findRedDots(ctx, w, h) {
     }
   }
 
-  const minArea = Math.max(4, w * h * 0.0002);
+  const minArea = Math.max(4, w * h * 0.0001);
   const maxArea = Math.max(100, w * h * 0.08);
   let valid = blobs.filter(b => b.count >= minArea && b.count <= maxArea);
   valid.sort((a, b) => b.count - a.count);
@@ -331,200 +511,9 @@ function findRedDots(ctx, w, h) {
 
 function binaryCheck(data, idx) {
   const pi = idx * 4;
-  return data[pi] > 180 && data[pi + 1] < 100 && data[pi + 2] < 100
-      && (data[pi] - data[pi + 1]) > 60 && (data[pi] - data[pi + 2]) > 60;
+  return data[pi] > 160 && data[pi + 1] < 110 && data[pi + 2] < 110
+      && (data[pi] - data[pi + 1]) > 50 && (data[pi] - data[pi + 2]) > 50;
 }
-
-file.onchange = async (e) => {
-  const imgFile = e.target.files[0];
-  if (!imgFile) return;
-
-  revokeCurrentURL();
-
-  const img = new Image();
-  currentObjectURL = URL.createObjectURL(imgFile);
-  img.src = currentObjectURL;
-
-  img.onload = async () => {
-    preview.src = img.src;
-    srcSignal.classList.add("hide");
-    
-    ocrResult.textContent = "SYS: TESSERACT ENGINE INITIALIZING...";
-    ocrResult.classList.remove("empty");
-    
-    downloadQr.disabled = true;
-    downloadText.disabled = true;
-    
-    qrSignal.classList.remove("hide");
-    debugSignal.classList.remove("hide");
-    textSignal.classList.remove("hide");
-    
-    dotInfo.textContent = "SCANNING QR...";
-    setStatus("SCANNING QR MATRIX...");
-
-    // ── 1. QR Detection ──
-    const codeReader = new ZXing.BrowserQRCodeReader();
-    let qrPoints, qrText;
-
-    try {
-      const resultQR = await codeReader.decodeFromImageElement(img);
-      qrPoints = resultQR.resultPoints;
-      qrText = resultQR.getText();
-    } catch (err) {
-      showModal("DEVICE ERROR", "QR CODE MODULE NOT DETECTED IN IMAGE SEQUENCE.");
-      ocrResult.textContent = "FATAL: QR CODE NOT FOUND";
-      ocrResult.classList.add("empty");
-      dotInfo.textContent = "NO QR FOUND";
-      setStatus("ERROR");
-      return;
-    }
-
-    if (!qrPoints || qrPoints.length < 3) {
-      showModal("ARRAY ERROR", "QR DETECTED BUT LACKS VALID POSITION INDEX MARKS.");
-      ocrResult.textContent = "ERROR: POSITION POINTS UNDEFINED";
-      ocrResult.classList.add("empty");
-      dotInfo.textContent = "BAD INDEX MARKS";
-      setStatus("ERROR");
-      return;
-    }
-
-    // ── 2. Crop QR region ──
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-    qrPoints.forEach(p => {
-      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
-      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
-    });
-
-    const qrPad = Math.max(20, Math.round((maxX - minX) * 0.12));
-    const sx = Math.max(0, minX - qrPad);
-    const sy = Math.max(0, minY - qrPad);
-    const sw = Math.min(img.width - sx, (maxX - minX) + qrPad * 2);
-    const sh = Math.min(img.height - sy, (maxY - minY) + qrPad * 2);
-
-    qrCanvas.width = sw;
-    qrCanvas.height = sh;
-    const qrCtx = qrCanvas.getContext("2d");
-    qrCtx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-    qrSignal.classList.add("hide");
-
-    dotInfo.textContent = `QR OK: ${qrText.slice(0,15)}... | RES: ${sw}x${sh}`;
-    setStatus("QR CAPTURED, TRACKING TARGET MARKERS...");
-
-    // ── 3. Red dot detection ──
-    const dots = findRedDots(qrCtx, sw, sh);
-
-    debugCanvas.width = sw;
-    debugCanvas.height = sh;
-    const debugCtx = debugCanvas.getContext("2d");
-    debugCtx.drawImage(qrCanvas, 0, 0);
-    debugCtx.strokeStyle = "#000000"; // 改為黑線
-    debugCtx.lineWidth = 2;
-    debugSignal.classList.add("hide");
-
-    dots.forEach((d, i) => {
-      debugCtx.strokeStyle = "#000000"; // 改為黑線
-      debugCtx.strokeRect(d.minX, d.minY, d.maxX - d.minX + 1, d.maxY - d.minY + 1);
-      debugCtx.beginPath();
-      debugCtx.arc(d.x, d.y, 4, 0, Math.PI * 2);
-      debugCtx.stroke();
-      debugCtx.fillStyle = "#000000"; // 改為黑字
-      debugCtx.font = "10px monospace";
-      debugCtx.fillText(`#${i}`, d.x + 6, d.y - 6);
-    });
-
-    // ── 4. Select best 4 dots ──
-    if (dots.length < 4) {
-      dotInfo.textContent = `MARKERS FETCH FAILED: ${dots.length}/4 FOUND`;
-      ocrResult.textContent = `CRITICAL: INSUFFICIENT RED TARGET MARKERS (${dots.length}/4)`;
-      ocrResult.classList.add("empty");
-      setStatus("ERROR: MARKERS MISSING");
-      return;
-    }
-
-    const corners = pick4Corners(dots);
-    dotInfo.textContent += ` | DOTS: ${dots.length}`;
-
-    corners.forEach((d, i) => {
-      debugCtx.strokeStyle = "#000000"; // 統一改為黑線
-      debugCtx.strokeRect(d.minX, d.minY, d.maxX - d.minX + 1, d.maxY - d.minY + 1);
-    });
-
-    // ── 5. Compute text bounding box ──
-    const [tl, tr, br, bl] = corners;
-    let textX = Math.max(tl.maxX, bl.maxX);
-    let textY = Math.max(tl.maxY, tr.maxY);
-    let textW = Math.min(tr.minX, br.minX) - textX;
-    let textH = Math.min(br.minY, bl.minY) - textY;
-
-    if (textW <= 0 || textH <= 0) {
-      const xs = corners.map(d => d.x);
-      const ys = corners.map(d => d.y);
-      const cMinX = Math.min(...xs), cMaxX = Math.max(...xs);
-      const cMinY = Math.min(...ys), cMaxY = Math.max(...ys);
-      const fpad = 2;
-      textX = Math.max(0, cMinX - fpad);
-      textY = Math.max(0, cMinY - fpad);
-      textW = Math.min(sw - textX, cMaxX - cMinX + fpad * 2);
-      textH = Math.min(sh - textY, cMaxY - cMinY + fpad * 2);
-    }
-
-    textCanvas.width = textW;
-    textCanvas.height = textH;
-    const textCtx = textCanvas.getContext("2d");
-    textCtx.fillStyle = "#FFFFFF";
-    textCtx.fillRect(0, 0, textW, textH);
-    textCtx.drawImage(qrCanvas, textX, textY, textW, textH, 0, 0, textW, textH);
-    textSignal.classList.add("hide");
-
-    debugCtx.strokeStyle = "#000000"; // 改為黑虛線
-    debugCtx.lineWidth = 1;
-    debugCtx.setLineDash([3, 3]);
-    debugCtx.strokeRect(textX, textY, textW, textH);
-    debugCtx.setLineDash([]);
-
-    setStatus("TEXT ROI EXTRACTED, PROCESSING OCR ENGINE...");
-
-    // ── 6. OCR ──
-    textCanvas.toBlob(async blob => {
-      downloadQr.disabled = false;
-      downloadText.disabled = false;
-
-      try {
-        const { data: { words } } = await Tesseract.recognize(blob, "eng", {
-          tessedit_ocr_engine_mode: "1",
-          tessedit_pageseg_mode: "7",
-          preserve_interword_spaces: "1"
-        });
-
-        const CONFIDENCE_THRESHOLD = 30;
-        const highConfWords = words.filter(w => w.confidence >= CONFIDENCE_THRESHOLD);
-        let resultText = highConfWords.map(w => w.text).join(" ").trim();
-        resultText = resultText.replace(/\s+/g, '');
-
-        if (resultText) {
-          ocrResult.textContent = resultText;
-          ocrResult.classList.remove("empty");
-          setStatus("MATRIX PROCESS COMPLETED: SUCCESS");
-        } else {
-          ocrResult.textContent = "WARN: UNABLE TO DECODE WITH REASONABLE CONFIDENCE";
-          ocrResult.classList.add("empty");
-          setStatus("LOW CONFIDENCE INTERPRETATION");
-        }
-      } catch (e) {
-        console.error(e);
-        ocrResult.textContent = "CORE ERROR: RECOGNITION FAILURE\n" + e.message;
-        ocrResult.classList.add("empty");
-        setStatus("ENGINE RECOGNITION ERROR");
-      }
-    });
-  };
-
-  img.onerror = () => {
-    showModal("IO ERROR", "UNABLE TO PARSE TARGET BINARY STREAM.");
-    setStatus("DEVICE ERROR");
-  };
-};
 
 function pick4Corners(dots) {
   const cx = dots.reduce((s, d) => s + d.x, 0) / dots.length;
@@ -571,8 +560,6 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 1000);
-
-window.addEventListener("beforeunload", revokeCurrentURL);
 </script>
 </body>
 </html>
