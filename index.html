@@ -287,7 +287,8 @@ function stopScanning() {
   videoBtn.textContent = "[ START CAMERA ]";
   videoBtn.classList.remove("active");
   srcSignal.classList.remove("hide");
-  qrSignal.classList.remove("hide");
+  ///qrSignal.classList.remove("hide");
+  qrSignal.classList.add("hide");
   dotInfo.textContent = "STANDBY";
   setStatus("READY");
   
@@ -329,7 +330,7 @@ function processFrame(resultQR) {
   qrCanvas.height = sh;
   const qrCtx = qrCanvas.getContext("2d");
   qrCtx.drawImage(tempCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
-  qrSignal.classList.add("hide");
+  ///qrSignal.classList.add("hide");
 
   dotInfo.textContent = `QR: ${qrText}`;
   downloadQr.disabled = false;
