@@ -50,43 +50,43 @@ body {
 .btn.active { background: #000; color: #fff; }
 
 /* 統一手機排版規格：垂直單欄，允許上下滑動 */
-.main { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 12px; gap: 12px; }
+.main { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 12px; gap: 12px; box-sizing: border-box; }
 
 .workspace { display: flex; flex-direction: column; overflow: visible; gap: 12px; }
 
-.panel { display: flex; flex-direction: column; border: 1px solid #000; margin-bottom: 4px; }
+.panel { display: flex; flex-direction: column; border: 1px solid #000; margin-bottom: 4px; height: 100%; }
 .panel-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 6px 12px; background: #f0f0f0; border-bottom: 1px solid #000;
   font-size: 0.7rem; color: #000; text-transform: uppercase; letter-spacing: 1px;
   font-weight: bold;
 }
-.panel-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.panel-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; }
 
 /* 圖片框架優化：符合手機垂直高度，避免單一元件佔滿整個螢幕 */
 /* 修改這段樣式，限制最大高度不突破手機視窗 */
 /* 修正：允許影片與畫布根據自身比例正常展開拉伸，不再限制 max-height */
 /* 修正：限制內部影片和畫布的最大尺寸，完美保持比例，絕不爆開 */
 .img-frame video, .img-frame canvas {
+  position: absolute;
+  top: 0; left: 0;
   width: 100%;
   height: 100%;
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* 修正核心：保持原本比例縮放，多餘空間留白 */
+
+  object-fit: contain;
   display: block;
 }
 
 /* 修正：外層框架設定合理的自適應高度（利用 vh 確保手機畫面放得下） */
 .img-frame {
-  border: 1px solid #000; 
-  background: #fafafa; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  height: 100%;
-
+  border: 1px solid #000;
+  background: #fafafa;
   position: relative;
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
 }
 
 .no-signal {
@@ -142,7 +142,7 @@ body {
     </div>
   </div>
 
-  <div class="workspace" id="resultPanel" style="display: none; flex:1; min-height:0;">
+  <div class="workspace" id="resultPanel" style="display: block; flex:1; min-height:0;">
       <div class="panel" style="flex:1; min-height:0;">
         <div class="panel-header">
           <span>&gt; QR RESULT</span>
@@ -251,6 +251,10 @@ videoBtn.onclick = async () => {
 
 let controls;  ///***
 async function startScanning() {
+  
+  cameraPanel.style.display = "block";
+  resultPanel.style.display = "none";
+
   try {
     isScanning = true;
     videoBtn.textContent = "[ STOP CAMERA ]";
@@ -275,6 +279,10 @@ async function startScanning() {
 }
 
 function stopScanning() {
+  
+  cameraPanel.style.display = "none";
+  resultPanel.style.display = "block";
+
   isScanning = false;
   videoBtn.textContent = "[ START CAMERA ]";
   videoBtn.classList.remove("active");
@@ -347,9 +355,10 @@ function processFrame(resultQR) {
       qrlStatus.style.color = "#666";
       qrlStatus.style.borderColor = "#ccc";
     }
+
   } else {
     qrlBefore.textContent = qrText;
-    qrlAfter.textContent = "❌ 非合法網址";
+    qrlAfter.textContent = "URL???";
     qrlStatus.textContent = "INVALID";
     qrlStatus.style.background = "#fff";
     qrlStatus.style.color = "#c00";
@@ -357,7 +366,7 @@ function processFrame(resultQR) {
   }
 
   cameraPanel.style.display = "none";
-  resultPanel.style.display = "flex";
+  resultPanel.style.display = "block";
 }
 
 
