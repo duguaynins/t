@@ -335,10 +335,12 @@ function processFrame(resultQR) {
   dotInfo.textContent = `QR: ${qrText}`;
   downloadQr.disabled = false;
   setStatus(`DECODED: ${qrText}`);
-  stopScanning();
+  ///stopScanning();
 
   const normalized = normalize(qrText);
   if (normalized) {
+    stopScanning();
+    
     const urlObj = new URL(normalized);
     const hostname = urlObj.hostname;
     qrlBefore.textContent = normalized;
