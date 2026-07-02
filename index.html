@@ -339,12 +339,13 @@ function processFrame(resultQR) {
 
   const normalized = normalize(qrText);
   if (normalized) {
-    stopScanning();
+    ///stopScanning();
     
     const urlObj = new URL(normalized);
     const hostname = urlObj.hostname;
     qrlBefore.textContent = normalized;
     qrlAfter.textContent = hostname;
+    stopScanning();
 
     const target = "google.com";
     if (hostname.endsWith(target)) {
