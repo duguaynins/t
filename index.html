@@ -281,7 +281,7 @@ async function startScanning() {
 function stopScanning() {
   
   cameraPanel.style.display = "none";
-  resultPanel.style.display = "block";
+  resultPanel.style.display = "flex";  ///block
 
   isScanning = false;
   videoBtn.textContent = "[ START CAMERA ]";
@@ -369,8 +369,8 @@ function processFrame(resultQR) {
     qrlStatus.style.borderColor = "#c00";
   }
 
-  cameraPanel.style.display = "none";
-  resultPanel.style.display = "flex";  ///block
+  ///cameraPanel.style.display = "none";
+  ///resultPanel.style.display = "flex";  ///block
 }
 
 
