@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="auto">
 <head>
@@ -348,6 +349,17 @@ function processFrame(resultQR) {
     stopScanning();
 
     const target = "google.com";
+    const parts = hostname.toLowerCase().split(".");
+
+    const last = parts.at(-1);      // 倒數第一
+    const second = parts.at(-2);    // 倒數第二
+
+    console.log(last, second);
+
+    if (last === "gov" || second === "gov") {qrlStatus.style.background = "green";qrlStatus.textContent = "TRUSTED";}
+    else if (last === "edu" || second === "edu") {qrlStatus.style.background = "green";qrlStatus.textContent = "TRUSTED";}
+    else {qrlStatus.style.background = "#ccc";qrlStatus.textContent = "UNTRUSTED";}
+/*
     if (hostname.endsWith(target)) {
       qrlStatus.textContent = "TRUSTED";
       qrlStatus.style.background = "green";
@@ -358,7 +370,7 @@ function processFrame(resultQR) {
       qrlStatus.style.background = "#ccc";
       qrlStatus.style.color = "#666";
       qrlStatus.style.borderColor = "#ccc";
-    }
+    }*/
 
   } else {
     qrlBefore.textContent = qrText;
