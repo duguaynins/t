@@ -346,7 +346,7 @@ function processFrame(resultQR) {
     const hostname = urlObj.hostname;
     qrlBefore.textContent = normalized;
     qrlAfter.textContent = hostname;
-    stopScanning();
+    ///stopScanning();
 
     const target = "google.com";
     const parts = hostname.toLowerCase().split(".");
@@ -359,6 +359,8 @@ function processFrame(resultQR) {
     if (last === "gov" || second === "gov") {qrlStatus.style.background = "green";qrlStatus.textContent = "TRUSTED";}
     else if (last === "edu" || second === "edu") {qrlStatus.style.background = "green";qrlStatus.textContent = "TRUSTED";}
     else {qrlStatus.style.background = "#ccc";qrlStatus.textContent = "UNTRUSTED";}
+    stopScanning();
+    
 /*
     if (hostname.endsWith(target)) {
       qrlStatus.textContent = "TRUSTED";
