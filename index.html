@@ -359,6 +359,7 @@ function processFrame(resultQR) {
     if (last === "gov" || second === "gov") {qrlStatus.style.background = "green";qrlStatus.textContent = "TRUSTED";}
     else if (last === "edu" || second === "edu") {qrlStatus.style.background = "green";qrlStatus.textContent = "TRUSTED";}
     else {qrlStatus.style.background = "#ccc";qrlStatus.textContent = "UNTRUSTED";}
+    qrlStatus.style.color = "white";
     stopScanning();
     
 /*
