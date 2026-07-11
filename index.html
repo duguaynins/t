@@ -1,570 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OpenCV.js + Tesseract.js - Real-time English Text Detection & Click OCR</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
-    .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-    h1 { font-size: 1.5rem; text-align: center; margin-bottom: 10px; color: #00d9ff; }
-    .status { text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; }
-    .status.loading { background: #16213e; border: 1px solid #0f3460; }
-    .status.ready { background: #0f3460; border: 1px solid #00d9ff; color: #00d9ff; }
-    .status.error { background: #3d1a1a; border: 1px solid #e94560; color: #e94560; }
-    
-    .video-wrapper { position: relative; width: 100%; max-width: 640px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
-    video, canvas { display: block; width: 100%; height: auto; }
-    #overlay { position: absolute; top: 0; left: 0; pointer-events: none; }
-    #cropCanvas { display: none; }
-    
-    .controls { display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
-    button { padding: 10px 20px; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    #startBtn { background: #00d9ff; color: #1a1a2e; }
-    #startBtn:hover:not(:disabled) { background: #00b8d4; transform: translateY(-1px); }
-    #stopBtn { background: #e94560; color: white; }
-    #stopBtn:hover:not(:disabled) { background: #d63650; transform: translateY(-1px); }
-    
-    .stats { display: flex; gap: 20px; justify-content: center; margin-top: 15px; font-size: 0.85rem; color: #888; }
-    .stat { display: flex; align-items: center; gap: 6px; }
-    .stat-value { color: #00d9ff; font-weight: 600; font-family: monospace; }
-    
-    #result { margin-top: 15px; padding: 15px; background: #16213e; border-radius: 8px; border: 1px solid #0f3460; min-height: 60px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-    .result-label { color: #00d9ff; font-weight: 600; margin-bottom: 8px; display: block; }
-    
-    .instructions { margin-top: 20px; padding: 15px; background: #16213e; border-radius: 8px; border: 1px solid #0f3460; font-size: 0.85rem; line-height: 1.7; }
-    .instructions h3 { margin: 0 0 10px; color: #00d9ff; font-size: 1rem; }
-    .instructions ul { margin: 0; padding-left: 20px; }
-    .instructions li { margin: 5px 0; }
-    
-    @media (max-width: 660px) {
-      .container { padding: 15px; }
-      h1 { font-size: 1.2rem; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>📷 Real-time English Text Detection + Click OCR</h1>
-    
-    <div id="status" class="status loading">Loading OpenCV.js & Tesseract.js from CDN...</div>
-    
-    <div class="video-wrapper">
-      <video id="video" width="640" height="480" autoplay muted playsinline></video>
-      <canvas id="overlay" width="640" height="480"></canvas>
-      <canvas id="cropCanvas"></canvas>
-    </div>
-    
-    <div class="controls">
-      <button id="startBtn" onclick="startCamera()">Start Camera</button>
-      <button id="stopBtn" onclick="stopCamera()" disabled>Stop Camera</button>
-    </div>
-    
-    <div class="stats">
-      <div class="stat">FPS: <span id="fps" class="stat-value">--</span></div>
-      <div class="stat">Detected: <span id="detCount" class="stat-value">0</span></div>
-      <div class="stat">Detect Time: <span id="detTime" class="stat-value">--</span>ms</div>
-    </div>
-    
-    <div id="result">
-      <span class="result-label">OCR Result:</span>
-      <span id="ocrText">Click on a detected text box to recognize...</span>
-    </div>
-    
-    <div class="instructions">
-      <h3>How to use:</h3>
-      <ul>
-        <li>Click <strong>Start Camera</strong> and allow camera permission</li>
-        <li>Point camera at English text (documents, signs, screens)</li>
-        <li>Green boxes = detected text regions (~10 FPS)</li>
-        <li><strong>Click any green box</strong> to run OCR on that region</li>
-        <li>OCR result appears below</li>
-      </ul>
-    </div>
-  </div>
+<meta charset="UTF-8">
+<title>DeviceOrientation 範例</title>
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+}
 
-  <!-- External CDN Resources -->
-  <!--script src="https://docs.opencv.org/4.x/opencv.js" crossorigin="anonymous"></script!-->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" crossorigin="anonymous"></script>
-  <!-- 修改後的程式碼（使用 cdnjs 穩定的 4.9.2 版本） -->
-  <!--script src="https://cdnjs.cloudflare.com/ajax/libs/opencv.js/4.9.2/opencv.js" crossorigin="anonymous"></script!-->
-  <script src="https://cdn.jsdelivr.net/npm/opencv.js/opencv.js"></script>
+.box {
+  font-size: 24px;
+  margin: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>手機方向感測</h1>
+
+<div class="box">
+Alpha: <span id="alpha">0</span>°
+</div>
+
+<div class="box">
+Beta: <span id="beta">0</span>°
+</div>
+
+<div class="box">
+Gamma: <span id="gamma">0</span>°
+</div>
+
 
 <script>
-    // ============ CONFIG ============
-    const VIDEO_W = 640, VIDEO_H = 480;
-    const DETECT_INTERVAL = 100; // ms ~10 FPS
-    const DET_INPUT_SIZE = 640;  // PPOCRv3 input size
-    const SCORE_THRESH = 0.3;
-    const NMS_THRESH = 0.4;
-    const OCR_SCALE = 3;
-    const MODEL_URL = 'https://huggingface.co/opencv/opencv_zoo/resolve/main/models/text_detection_ppocr/text_detection_en_ppocrv3_2023may.onnx';
-    
-    // ============ STATE ============
-    let cv = null;
-    let net = null;
-    let tesseract = null;
-    let video = null;
-    let overlay = null;
-    let overlayCtx = null;
-    let cropCanvas = null;
-    let cropCtx = null;
-    let detectTimer = null;
-    let lastFrameTime = 0;
-    let frameCount = 0;
-    let fps = 0;
-    let lastDetectedBoxes = [];
-    let isDetecting = false;
-    let modelLoaded = false;
-    let mats = {};
-    
-    // ============ UTILS ============
-    function $(id) { return document.getElementById(id); }
-    function setStatus(msg, cls) {
-      const el = $('status');
-      el.textContent = msg;
-      el.className = 'status ' + (cls || '');
-    }
-    function log(msg) { console.log(`[${Date.now()%10000}] ${msg}`); }
-    
-    // ============ MAT POOL ============
-    function getMat(rows, cols, type) {
-      const key = `${rows}x${cols}x${type}`;
-      if (!mats[key]) mats[key] = [];
-      if (mats[key].length) return mats[key].pop();
-      return new cv.Mat(rows, cols, type);
-    }
-    function releaseMat(mat) {
-      if (!mat || !mat.rows) return;
-      const key = `${mat.rows}x${mat.cols}x${mat.type()}`;
-      if (!mats[key]) mats[key] = [];
-      if (mats[key].length < 10) mats[key].push(mat);
-      else mat.delete();
-    }
-    
-    // ============ OPENCV INIT ============
-    function initOpenCV() {
-      return new Promise((resolve, reject) => {
-        if (window.cv && window.cv.FS) {
-          cv = window.cv;
-          log('OpenCV.js & FS module fully ready');
-          resolve();
-          return;
-        }
-        
-        window.cv = window.cv || {};
-        const oldCallback = window.cv.onRuntimeInitialized;
-        window.cv.onRuntimeInitialized = () => {
-          if (oldCallback) oldCallback();
-          cv = window.cv;
-          log('OpenCV.js WebAssembly fully initialized');
-          resolve();
-        };
-        
-        setTimeout(() => {
-          if (window.cv && window.cv.FS) {
-            cv = window.cv;
-            resolve();
-          } else {
-            reject(new Error('OpenCV.js runtime init timeout (FS missing)'));
-          }
-        }, 60000);
-      });
-    }
-    
-    // ============ LOAD MODEL ============
-    async function loadModel() {
-      log('Fetching ONNX model from Hugging Face...');
-      const resp = await fetch(MODEL_URL);
-      if (!resp.ok) throw new Error(`Model fetch failed: ${resp.status}`);
-      const arrayBuffer = await resp.arrayBuffer();
-      const uint8 = new Uint8Array(arrayBuffer);
-      
-      const modelPath = '/model.onnx';
-      cv.FS.writeFile(modelPath, uint8);
-      
-      net = cv.dnn.readNetFromONNX(modelPath);
-      if (net.empty()) throw new Error('Failed to load ONNX model');
-      
-      net.setPreferableBackend(cv.dnn.DNN_BACKEND_WASM);
-      net.setPreferableTarget(cv.dnn.DNN_TARGET_WASM);
-      
-      cv.FS.unlink(modelPath);
-      modelLoaded = true;
-      log('PPOCRv3 English model loaded');
-    }
-    
-    // ============ TESSERACT INIT ============
-    async function initTesseract() {
-      log('Initializing Tesseract.js...');
-      tesseract = await Tesseract.createWorker('eng', 1, {
-        logger: m => console.log('[Tesseract]', m.status, m.progress || ''),
-        workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
-        // 🛠️ 修正：換成 jsDelivr 穩定的語言包路徑
-        langPath: 'https://cdn.jsdelivr.net/npm/@trevorstarick/tessdata@1.0.3/', 
-        corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/tesseract-core.wasm.js'
-      });
-      await tesseract.setParameters({
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!?@#$%&*()-_=+[]{}|;:\'"<>/`~ ',
-        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
-      });
-      log('Tesseract ready (eng)');
-    }
-    
-    // ============ CAMERA ============
-    async function startCamera() {
-      try {
-        video = $('video');
-        overlay = $('overlay');
-        cropCanvas = $('cropCanvas');
 
-        if (!video || !overlay) {
-          throw new Error('Required DOM elements not found!');
-        }
+function startOrientation(){
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: VIDEO_W }, height: { ideal: VIDEO_H }, facingMode: 'environment' }
-        });
-        video.srcObject = stream;
-        await video.play();
-        
-        const vw = video.videoWidth || VIDEO_W;
-        const vh = video.videoHeight || VIDEO_H;
-        overlay.width = vw;
-        overlay.height = vh;
-        overlay.style.width = vw + 'px';
-        overlay.style.height = vh + 'px';
-        overlayCtx = overlay.getContext('2d');
-        
-        $('startBtn').disabled = true;
-        $('stopBtn').disabled = false;
-        setStatus('Camera started - Detecting text...', 'ready');
-        startDetectionLoop();
-      } catch (e) {
-        setStatus('Camera error: ' + e.message, 'error');
-        console.error(e);
-      }
-    }
-    
-    function stopCamera() {
-      if (detectTimer) clearInterval(detectTimer);
-      detectTimer = null;
-      if (video?.srcObject) {
-        video.srcObject.getTracks().forEach(t => t.stop());
-        video.srcObject = null;
-      }
-      $('startBtn').disabled = false;
-      $('stopBtn').disabled = true;
-      overlayCtx?.clearRect(0, 0, overlay.width, overlay.height);
-      setStatus('Camera stopped', 'loading');
-    }
-    
-    // ============ DETECTION LOOP ============
-    function startDetectionLoop() {
-      detectTimer = setInterval(detectFrame, DETECT_INTERVAL);
-    }
-    
-    async function detectFrame() {
-      // 🛠️ 修正：加入防禦防線，避免 cv 尚未載入就執行導致 CV_8UC4 報錯
-      if (!cv || isDetecting || !video || video.readyState < 2) return;
-      isDetecting = true;
-      const t0 = performance.now();
-      
-      try {
-        const src = getMat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
-        cv.cvtColor(video, src, cv.COLOR_RGBA2BGR);
-        
-        const scal = Math.min(DET_INPUT_SIZE / src.cols, DET_INPUT_SIZE / src.rows);
-        const newW = Math.round(src.cols * scal);
-        const newH = Math.round(src.rows * scal);
-        const resized = getMat(newH, newW, cv.CV_8UC3);
-        cv.resize(src, resized, new cv.Size(newW, newH));
-        
-        const top = Math.floor((DET_INPUT_SIZE - newH) / 2);
-        const bottom = DET_INPUT_SIZE - newH - top;
-        const left = Math.floor((DET_INPUT_SIZE - newW) / 2);
-        const right = DET_INPUT_SIZE - newW - left;
-        
-        // 🛠️ 修正：明確宣告並建立 inp 矩陣，解決 ReferenceError 問題
-        const inp = getMat(DET_INPUT_SIZE, DET_INPUT_SIZE, cv.CV_8UC3);
-        cv.copyMakeBorder(resized, inp, top, bottom, left, right, cv.BORDER_CONSTANT, new cv.Scalar(114, 114, 114));
-        
-        const mean = [0.485, 0.456, 0.406];
-        const std = [0.229, 0.224, 0.225];
-        const normScale = 1/255.0; 
-        const blob = cv.dnn.blobFromImage(inp, normScale, new cv.Size(DET_INPUT_SIZE, DET_INPUT_SIZE), 
-          new cv.Scalar(0,0,0), true, false); 
-        
-        const blobData = blob.data32F;
-        const channels = blob.size[1];
-        const height = blob.size[2];
-        const width = blob.size[3];
-        const spatial = height * width;
-        for (let c = 0; c < channels; c++) {
-          const m = mean[c] / std[c];
-          const s = 1 / (255 * std[c]);
-          for (let i = 0; i < spatial; i++) {
-            blobData[c * spatial + i] = blobData[c * spatial + i] * s - m;
-          }
-        }
-        
-        net.setInput(blob);
-        const outs = new cv.MatVector();
-        net.forward(outs);
-        
-        const probMap = outs.get(0);
-        const probMat = getMat(probMap.size[2], probMap.size[3], cv.CV_32FC1);
-        const probData = probMap.data32F;
-        const probMatData = probMat.data32F;
-        for (let i = 0; i < probData.length; i++) probMatData[i] = probData[i];
-        
-        const binMat = getMat(probMat.rows, probMat.cols, cv.CV_8UC1);
-        cv.threshold(probMat, binMat, SCORE_THRESH, 1, cv.THRESH_BINARY);
-        
-        const contours = new cv.MatVector();
-        const hierarchy = new cv.Mat();
-        cv.findContours(binMat, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-        
-        const boxes = [];
-        const origW = src.cols, origH = src.rows;
-        
-        for (let i = 0; i < contours.size(); i++) {
-          const cnt = contours.get(i);
-          const area = cv.contourArea(cnt);
-          if (area < 50) { cnt.delete(); continue; }
-          
-          const rotRect = cv.minAreaRect(cnt);
-          const pts = cv.rotatedRectPoints(rotRect);
-          
-          const box = [];
-          for (let j = 0; j < 4; j++) {
-            const x = (pts[j].x - left) / scal;
-            const y = (pts[j].y - top) / scal;
-            box.push({ x: Math.max(0, Math.min(origW, x)), y: Math.max(0, Math.min(origH, y)) });
-          }
-          
-          boxes.push({ pts: box, score: Math.min(1, area / 1000) });
-          cnt.delete();
-        }
-        
-        lastDetectedBoxes = nmsBoxes(boxes, NMS_THRESH);
-        drawBoxes(lastDetectedBoxes);
-        
-        const detTime = performance.now() - t0;
-        $('detTime').textContent = detTime.toFixed(1);
-        $('detCount').textContent = lastDetectedBoxes.length;
-        
-        // 🛠️ 修正：嚴格做好 OpenCV WebAssembly 的記憶體回收處理，防止分頁閃退
-        probMap.delete(); 
-        outs.delete();
-        contours.delete(); 
-        hierarchy.delete();
-        blob.delete();
-        
-        releaseMat(src); 
-        releaseMat(resized);
-        releaseMat(inp); 
-        releaseMat(probMat); 
-        releaseMat(binMat);
-        
-      } catch (e) {
-        console.error('Detection error:', e);
-      }
-      
-      isDetecting = false;
-      updateFPS();
-    }
-    
-    // ============ NMS ============
-    function nmsBoxes(boxes, thresh) {
-      if (boxes.length === 0) return [];
-      boxes.sort((a, b) => b.score - a.score);
-      const keep = [];
-      const suppressed = new Array(boxes.length).fill(false);
-      
-      for (let i = 0; i < boxes.length; i++) {
-        if (suppressed[i]) continue;
-        keep.push(boxes[i]);
-        for (let j = i + 1; j < boxes.length; j++) {
-          if (suppressed[j]) continue;
-          if (polygonIoU(boxes[i].pts, boxes[j].pts) > thresh) suppressed[j] = true;
-        }
-      }
-      return keep;
-    }
-    
-    function polygonIoU(pts1, pts2) {
-      const getBBox = (pts) => {
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        pts.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
-        return { x1: minX, y1: minY, x2: maxX, y2: maxY };
-      };
-      const b1 = getBBox(pts1), b2 = getBBox(pts2);
-      const ix1 = Math.max(b1.x1, b2.x1), iy1 = Math.max(b1.y1, b2.y1);
-      const ix2 = Math.min(b1.x2, b2.x2), iy2 = Math.min(b1.y2, b2.y2);
-      const iw = Math.max(0, ix2 - ix1), ih = Math.max(0, iy2 - iy1);
-      const inter = iw * ih;
-      const area1 = (b1.x2 - b1.x1) * (b1.y2 - b1.y1);
-      const area2 = (b2.x2 - b2.x1) * (b2.y2 - b2.y1);
-      return inter / (area1 + area2 - inter + 1e-6);
-    }
-    
-    // ============ DRAW BOXES ============
-    function drawBoxes(boxes) {
-      if(!overlayCtx) return;
-      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
-      overlayCtx.lineWidth = 2;
-      overlayCtx.strokeStyle = '#00d9ff';
-      overlayCtx.fillStyle = '#00d9ff';
-      overlayCtx.font = '12px monospace';
-      
-      boxes.forEach((box, idx) => {
-        overlayCtx.beginPath();
-        overlayCtx.moveTo(box.pts[0].x, box.pts[0].y);
-        for (let i = 1; i < 4; i++) overlayCtx.lineTo(box.pts[i].x, box.pts[i].y);
-        overlayCtx.closePath();
-        overlayCtx.stroke();
-        
-        const cx = box.pts.reduce((s, p) => s + p.x, 0) / 4;
-        const cy = box.pts.reduce((s, p) => s + p.y, 0) / 4;
-        overlayCtx.fillText(`#${idx} (${(box.score*100).toFixed(0)}%)`, cx - 25, cy - 5);
-      });
-    }
-    
-    function pointInPolygon(pt, pts) {
-      let inside = false;
-      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-        const xi = pts[i].x, yi = pts[i].y;
-        const xj = pts[j].x, yj = pts[j].y;
-        const intersect = ((yi > pt.y) !== (yj > pt.y)) &&
-          (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi);
-        if (intersect) inside = !inside;
-      }
-      return inside;
-    }
-    
-    // ============ OCR ============
-    async function runOCR(box) {
-      $('ocrText').textContent = 'Recognizing...';
-      
-      try {
-        const pts = orderPoints(box.pts);
-        
-        const w1 = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
-        const w2 = Math.hypot(pts[2].x - pts[3].x, pts[2].y - pts[3].y);
-        const h1 = Math.hypot(pts[3].x - pts[0].x, pts[3].y - pts[0].y);
-        const h2 = Math.hypot(pts[2].x - pts[1].x, pts[2].y - pts[1].y);
-        const outW = Math.max(w1, w2) * OCR_SCALE;
-        const outH = Math.max(h1, h2) * OCR_SCALE;
-        
-        const srcPts = cv.matFromArray(4, 1, cv.CV_32FC2, pts.flatMap(p => [p.x, p.y]));
-        const dstPts = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, outW, 0, outW, outH, 0, outH]);
-        const M = cv.getPerspectiveTransform(srcPts, dstPts);
-        
-        const src = getMat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
-        cv.cvtColor(video, src, cv.COLOR_RGBA2BGR);
-        const warped = getMat(outH, outW, cv.CV_8UC3);
-        cv.warpPerspective(src, warped, M, new cv.Size(outW, outH), cv.INTER_CUBIC);
-        
-        const gray = getMat(outH, outW, cv.CV_8UC1);
-        cv.cvtColor(warped, gray, cv.COLOR_BGR2GRAY);
-        cv.threshold(gray, gray, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU);
-        
-        const pngMat = new cv.Mat();
-        cv.imencode('.png', gray, pngMat);
-        const pngData = new Uint8Array(pngMat.data, pngMat.dataStart, pngMat.rows * pngMat.cols * pngMat.elemSize());
-        const blob = new Blob([pngData], { type: 'image/png' });
-        const url = URL.createObjectURL(blob);
-        
-        const { data: { text } } = await tesseract.recognize(url);
-        URL.revokeObjectURL(url);
-        
-        const cleaned = text.trim().replace(/\s+/g, ' ');
-        $('ocrText').textContent = cleaned || '(no text recognized)';
-        
-        srcPts.delete(); dstPts.delete(); M.delete();
-        pngMat.delete();
-        releaseMat(src); releaseMat(warped); releaseMat(gray);
-        
-      } catch (e) {
-        console.error('OCR error:', e);
-        $('ocrText').textContent = 'OCR failed: ' + e.message;
-      }
-    }
-    
-    function orderPoints(pts) {
-      const sorted = [...pts].sort((a, b) => a.y - b.y || a.x - b.x);
-      const top = sorted.slice(0, 2).sort((a, b) => a.x - b.x);
-      const bottom = sorted.slice(2, 4).sort((a, b) => b.x - a.x);
-      return [top[0], top[1], bottom[0], bottom[1]];
-    }
-    
-    // ============ FPS ============
-    function updateFPS() {
-      frameCount++;
-      const now = performance.now();
-      if (now - lastFrameTime >= 1000) {
-        fps = frameCount;
-        frameCount = 0;
-        lastFrameTime = now;
-        $('fps').textContent = fps;
-      }
-    }
-    
-    // ============ MAIN ============
-    async function main() {
-      try {
-        video = $('video');
-        overlay = $('overlay');
-        cropCanvas = $('cropCanvas');
+  window.addEventListener(
+    "deviceorientation",
+    function(event){
 
-        if (overlay) {
-          overlay.addEventListener('click', async (e) => {
-            if (lastDetectedBoxes.length === 0) return;
-            
-            const rect = overlay.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const clickY = e.clientY - rect.top;
-            
-            let targetBox = null;
-            for (const box of lastDetectedBoxes) {
-              if (pointInPolygon({x: clickX, y: clickY}, box.pts)) {
-                targetBox = box;
-                break;
-              }
-            }
-            if (!targetBox) return;
-            
-            drawBoxes(lastDetectedBoxes);
-            if (overlayCtx) {
-              overlayCtx.lineWidth = 3;
-              overlayCtx.strokeStyle = '#e94560';
-              overlayCtx.beginPath();
-              overlayCtx.moveTo(targetBox.pts[0].x, targetBox.pts[0].y);
-              for (let i = 1; i < 4; i++) overlayCtx.lineTo(targetBox.pts[i].x, targetBox.pts[i].y);
-              overlayCtx.closePath();
-              overlayCtx.stroke();
-            }
-            await runOCR(targetBox);
-          });
-          log('Click listener successfully attached.');
-        }
+      let alpha = event.alpha;
+      let beta  = event.beta;
+      let gamma = event.gamma;
 
-        await initOpenCV();
-        await loadModel();
-        await initTesseract();
-        setStatus('Ready - Click "Start Camera"', 'ready');
-      } catch (e) {
-        setStatus('Init failed: ' + e.message, 'error');
-        console.error(e);
-      }
+
+      document.getElementById("alpha").innerHTML =
+        alpha ? alpha.toFixed(1) : 0;
+
+      document.getElementById("beta").innerHTML =
+        beta ? beta.toFixed(1) : 0;
+
+      document.getElementById("gamma").innerHTML =
+        gamma ? gamma.toFixed(1) : 0;
+
     }
-    
-    window.onload = () => {
-      main();
-    };
+  );
+
+}
+
+
+// iOS 需要權限
+if(
+ typeof DeviceOrientationEvent !== "undefined" &&
+ typeof DeviceOrientationEvent.requestPermission === "function"
+){
+
+ document.body.innerHTML +=
+ '<button id="btn">啟動感測器</button>';
+
+ document.getElementById("btn").onclick = async ()=>{
+
+   let permission =
+     await DeviceOrientationEvent.requestPermission();
+
+   if(permission === "granted"){
+      startOrientation();
+   }
+
+ };
+
+}else{
+
+ startOrientation();
+
+}
+
 </script>
+
 </body>
 </html>
