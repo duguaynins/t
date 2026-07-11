@@ -32,6 +32,10 @@ Beta: <span id="beta">0</span>°
 Gamma: <span id="gamma">0</span>°
 </div>
 
+<div class="box">
+Heading: <span id="heading">0</span>°
+</div>
+
 
 <script>
 
@@ -44,6 +48,7 @@ function startOrientation(){
       let alpha = event.alpha;
       let beta  = event.beta;
       let gamma = event.gamma;
+      let heading = event.webkitCompassHeading;
 
 
       document.getElementById("alpha").innerHTML =
@@ -54,6 +59,9 @@ function startOrientation(){
 
       document.getElementById("gamma").innerHTML =
         gamma ? gamma.toFixed(1) : 0;
+
+      document.getElementById("heading").innerHTML =
+        heading ? heading.toFixed(1) : 0;
 
     }
   );
