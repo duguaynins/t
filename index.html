@@ -86,10 +86,13 @@
   </div>
 
   <!-- External CDN Resources -->
-  <script src="https://docs.opencv.org/4.x/opencv.js" crossorigin="anonymous"></script>
+  <!--script src="https://docs.opencv.org/4.x/opencv.js" crossorigin="anonymous"></script!-->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" crossorigin="anonymous"></script>
-  
-  <script>
+  <!-- 修改後的程式碼（使用 cdnjs 穩定的 4.9.2 版本） -->
+  <!--script src="https://cdnjs.cloudflare.com/ajax/libs/opencv.js/4.9.2/opencv.js" crossorigin="anonymous"></script!-->
+  <script src="https://cdn.jsdelivr.net/npm/opencv.js/opencv.js"></script>
+
+<script>
     // ============ CONFIG ============
     const VIDEO_W = 640, VIDEO_H = 480;
     const DETECT_INTERVAL = 100; // ms ~10 FPS
@@ -169,7 +172,6 @@
       const arrayBuffer = await resp.arrayBuffer();
       const uint8 = new Uint8Array(arrayBuffer);
       
-      // Write to OpenCV virtual filesystem
       const modelPath = '/model.onnx';
       cv.FS.writeFile(modelPath, uint8);
       
@@ -179,9 +181,7 @@
       net.setPreferableBackend(cv.dnn.DNN_BACKEND_WASM);
       net.setPreferableTarget(cv.dnn.DNN_TARGET_WASM);
       
-      // Clean up FS
       cv.FS.unlink(modelPath);
-      
       modelLoaded = true;
       log('PPOCRv3 English model loaded');
     }
@@ -203,12 +203,21 @@
     }
     
     // ============ CAMERA ============
+    // 💡 確保 startCamera 暴露在全域作用域
     async function startCamera() {
       try {
+        // 🛠️ 修正：在啟動相機前，確保全域變數都有順利拿到實體
+        video = $('video');
+        overlay = $('overlay');
+        cropCanvas = $('cropCanvas');
+
+        if (!video || !overlay) {
+          throw new Error('Required DOM elements (video or overlay) not found!');
+        }
+
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: VIDEO_W }, height: { ideal: VIDEO_H }, facingMode: 'environment' }
         });
-        video = $('video');
         video.srcObject = stream;
         await video.play();
         
@@ -254,12 +263,10 @@
       const t0 = performance.now();
       
       try {
-        // Video -> Mat (BGR)
         const src = getMat(video.videoHeight, video.videoWidth, cv.CV_8UC4, 'src');
         cv.cvtColor(video, src, cv.COLOR_RGBA2BGR);
         
-        // Letterbox resize to 640x640
-        const inp = getMat(DET_INPUT_SIZE, DET_INPUT_SIZE, cv.CV_8UC3, 'inp');
+        // 🛠️ 修正：將變數命名為 scal，避免命名衝突
         const scal = Math.min(DET_INPUT_SIZE / src.cols, DET_INPUT_SIZE / src.rows);
         const newW = Math.round(src.cols * scal);
         const newH = Math.round(src.rows * scal);
@@ -272,17 +279,12 @@
         const right = DET_INPUT_SIZE - newW - left;
         cv.copyMakeBorder(resized, inp, top, bottom, left, right, cv.BORDER_CONSTANT, new cv.Scalar(114, 114, 114));
         
-        // Normalize: PPOCR uses ImageNet mean/std
-        // blobFromImage: (img - mean) * scalefactor
-        // We want: (img/255 - mean) / std = img/(255*std) - mean/std
-        // So scalefactor = 1/(255*std), mean = mean/std
         const mean = [0.485, 0.456, 0.406];
         const std = [0.229, 0.224, 0.225];
-        const scale = 1/255.0;
-        const blob = cv.dnn.blobFromImage(inp, scale, new cv.Size(DET_INPUT_SIZE, DET_INPUT_SIZE), 
-          new cv.Scalar(0,0,0), true, false); // swapRB=true (BGR->RGB)
+        const normScale = 1/255.0; // 🛠️ 修正：這裡使用 normScale，不與前面衝突
+        const blob = cv.dnn.blobFromImage(inp, normScale, new cv.Size(DET_INPUT_SIZE, DET_INPUT_SIZE), 
+          new cv.Scalar(0,0,0), true, false); 
         
-        // Manual normalization: (blob - mean) / std
         const blobData = blob.data32F;
         const channels = blob.size[1];
         const height = blob.size[2];
@@ -300,10 +302,7 @@
         const outs = new cv.MatVector();
         net.forward(outs);
         
-        // Output: [1, 1, 160, 160] probability map
         const probMap = outs.get(0);
-        
-        // Convert to binary mask
         const probMat = getMat(probMap.size[2], probMap.size[3], cv.CV_32FC1, 'probMat');
         const probData = probMap.data32F;
         const probMatData = probMat.data32F;
@@ -312,12 +311,10 @@
         const binMat = getMat(probMat.rows, probMat.cols, cv.CV_8UC1, 'binMat');
         cv.threshold(probMat, binMat, SCORE_THRESH, 1, cv.THRESH_BINARY);
         
-        // Find contours
         const contours = new cv.MatVector();
         const hierarchy = new cv.Mat();
         cv.findContours(binMat, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
         
-        // Filter contours -> rotated rects
         const boxes = [];
         const origW = src.cols, origH = src.rows;
         
@@ -329,11 +326,11 @@
           const rotRect = cv.minAreaRect(cnt);
           const pts = cv.rotatedRectPoints(rotRect);
           
-          // Scale back to original coordinates
           const box = [];
           for (let j = 0; j < 4; j++) {
-            const x = (pts[j].x - left) / scale;
-            const y = (pts[j].y - top) / scale;
+            // 🛠️ 修正：這裡也同步使用 scal 還原真實座標
+            const x = (pts[j].x - left) / scal;
+            const y = (pts[j].y - top) / scal;
             box.push({ x: Math.max(0, Math.min(origW, x)), y: Math.max(0, Math.min(origH, y)) });
           }
           
@@ -341,21 +338,16 @@
           cnt.delete();
         }
         
-        // NMS
         lastDetectedBoxes = nmsBoxes(boxes, NMS_THRESH);
-        
-        // Draw
         drawBoxes(lastDetectedBoxes);
         
-        // Stats
         const detTime = performance.now() - t0;
         $('detTime').textContent = detTime.toFixed(1);
         $('detCount').textContent = lastDetectedBoxes.length;
         
-        // Cleanup
         probMap.delete(); probMat.delete(); binMat.delete();
         contours.delete(); hierarchy.delete();
-        releaseMat(src, 'src'); releaseMat(inp, 'inp'); releaseMat(resized, 'resized');
+        releaseMat(src); releaseMat(inp); releaseMat(resized);
         blob.delete();
         
       } catch (e) {
@@ -402,6 +394,7 @@
     
     // ============ DRAW BOXES ============
     function drawBoxes(boxes) {
+      if(!overlayCtx) return;
       overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
       overlayCtx.lineWidth = 2;
       overlayCtx.strokeStyle = '#00d9ff';
@@ -421,37 +414,6 @@
       });
     }
     
-    // ============ CLICK HANDLER ============
-    overlay.addEventListener('click', async (e) => {
-      if (lastDetectedBoxes.length === 0) return;
-      
-      const rect = overlay.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
-      
-      let targetBox = null;
-      for (const box of lastDetectedBoxes) {
-        if (pointInPolygon({x: clickX, y: clickY}, box.pts)) {
-          targetBox = box;
-          break;
-        }
-      }
-      
-      if (!targetBox) return;
-      
-      // Highlight
-      drawBoxes(lastDetectedBoxes);
-      overlayCtx.lineWidth = 3;
-      overlayCtx.strokeStyle = '#e94560';
-      overlayCtx.beginPath();
-      overlayCtx.moveTo(targetBox.pts[0].x, targetBox.pts[0].y);
-      for (let i = 1; i < 4; i++) overlayCtx.lineTo(targetBox.pts[i].x, targetBox.pts[i].y);
-      overlayCtx.closePath();
-      overlayCtx.stroke();
-      
-      await runOCR(targetBox);
-    });
-    
     function pointInPolygon(pt, pts) {
       let inside = false;
       for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
@@ -469,10 +431,8 @@
       $('ocrText').textContent = 'Recognizing...';
       
       try {
-        // Order points: TL, TR, BR, BL
         const pts = orderPoints(box.pts);
         
-        // Output size
         const w1 = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
         const w2 = Math.hypot(pts[2].x - pts[3].x, pts[2].y - pts[3].y);
         const h1 = Math.hypot(pts[3].x - pts[0].x, pts[3].y - pts[0].y);
@@ -480,39 +440,33 @@
         const outW = Math.max(w1, w2) * OCR_SCALE;
         const outH = Math.max(h1, h2) * OCR_SCALE;
         
-        // Perspective transform
         const srcPts = cv.matFromArray(4, 1, cv.CV_32FC2, pts.flatMap(p => [p.x, p.y]));
         const dstPts = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, outW, 0, outW, outH, 0, outH]);
         const M = cv.getPerspectiveTransform(srcPts, dstPts);
         
-        // Warp
         const src = getMat(video.videoHeight, video.videoWidth, cv.CV_8UC4, 'src_ocr');
         cv.cvtColor(video, src, cv.COLOR_RGBA2BGR);
         const warped = getMat(outH, outW, cv.CV_8UC3, 'warped');
         cv.warpPerspective(src, warped, M, new cv.Size(outW, outH), cv.INTER_CUBIC);
         
-        // Grayscale + Otsu
         const gray = getMat(outH, outW, cv.CV_8UC1, 'gray');
         cv.cvtColor(warped, gray, cv.COLOR_BGR2GRAY);
         cv.threshold(gray, gray, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU);
         
-        // Encode PNG
         const pngMat = new cv.Mat();
         cv.imencode('.png', gray, pngMat);
         const pngData = new Uint8Array(pngMat.data, pngMat.dataStart, pngMat.rows * pngMat.cols * pngMat.elemSize());
         const blob = new Blob([pngData], { type: 'image/png' });
         const url = URL.createObjectURL(blob);
         
-        // Tesseract
         const { data: { text } } = await tesseract.recognize(url);
         URL.revokeObjectURL(url);
         
         const cleaned = text.trim().replace(/\s+/g, ' ');
         $('ocrText').textContent = cleaned || '(no text recognized)';
         
-        // Cleanup
         srcPts.delete(); dstPts.delete(); M.delete();
-        releaseMat(src, 'src_ocr'); releaseMat(warped, 'warped'); releaseMat(gray, 'gray');
+        releaseMat(src); releaseMat(warped); releaseMat(gray);
         pngMat.delete();
         
       } catch (e) {
@@ -543,6 +497,46 @@
     // ============ MAIN ============
     async function main() {
       try {
+        // 🛠️ 修正 1：網頁一讀取，優先在最一開始獲取全域 DOM 元素物件
+        video = $('video');
+        overlay = $('overlay');
+        cropCanvas = $('cropCanvas');
+
+        // 🛠️ 修正 2：確保元素存在後再綁定監聽事件，避免隨後的代碼因為 null 報錯崩潰
+        if (overlay) {
+          overlay.addEventListener('click', async (e) => {
+            if (lastDetectedBoxes.length === 0) return;
+            
+            const rect = overlay.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            
+            let targetBox = null;
+            for (const box of lastDetectedBoxes) {
+              if (pointInPolygon({x: clickX, y: clickY}, box.pts)) {
+                targetBox = box;
+                break;
+              }
+            }
+            if (!targetBox) return;
+            
+            drawBoxes(lastDetectedBoxes);
+            if (overlayCtx) {
+              overlayCtx.lineWidth = 3;
+              overlayCtx.strokeStyle = '#e94560';
+              overlayCtx.beginPath();
+              overlayCtx.moveTo(targetBox.pts[0].x, targetBox.pts[0].y);
+              for (let i = 1; i < 4; i++) overlayCtx.lineTo(targetBox.pts[i].x, targetBox.pts[i].y);
+              overlayCtx.closePath();
+              overlayCtx.stroke();
+            }
+            await runOCR(targetBox);
+          });
+          log('Click listener successfully attached.');
+        }
+
+        // 🛠️ 修正 3：更換外部 CDN（原 opencv.js 有 CORS 限制，這裡使用 cdnjs 穩定版）
+        // 請確保你的外部引入 script 有一併修正
         await initOpenCV();
         await loadModel();
         await initTesseract();
@@ -553,6 +547,7 @@
       }
     }
     
+    // 啟動主執行緒
     main();
   </script>
 </body>
