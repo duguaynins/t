@@ -147,6 +147,37 @@
     // ============ OPENCV INIT ============
     function initOpenCV() {
       return new Promise((resolve, reject) => {
+        // 如果 cv 已經存在且 FS 模組也好了，直接 resolve
+        if (window.cv && window.cv.FS) {
+          cv = window.cv;
+          log('OpenCV.js & FS module fully ready');
+          resolve();
+          return;
+        }
+        
+        // 否則，重新定義或掛載初始化成功的回調
+        const oldCallback = window.cv ? window.cv.onRuntimeInitialized : null;
+        window.cv = window.cv || {};
+        window.cv.onRuntimeInitialized = () => {
+          if (oldCallback) oldCallback();
+          cv = window.cv;
+          log('OpenCV.js WebAssembly fully initialized');
+          resolve();
+        };
+        
+        // 60秒逾時防護
+        setTimeout(() => {
+          if (window.cv && window.cv.FS) {
+            cv = window.cv;
+            resolve();
+          } else {
+            reject(new Error('OpenCV.js runtime init timeout (FS missing)'));
+          }
+        }, 60000);
+      });
+    }
+    function initOpenCV_Vx() {
+      return new Promise((resolve, reject) => {
         if (window.cv) {
           cv = window.cv;
           log('OpenCV.js already loaded');
