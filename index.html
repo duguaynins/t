@@ -130,14 +130,14 @@
     function log(msg) { console.log(`[${Date.now()%10000}] ${msg}`); }
     
     // ============ MAT POOL ============
-    function getMat(rows, cols, type, name) {
+    function getMat(rows, cols, type) {
       const key = `${rows}x${cols}x${type}`;
       if (!mats[key]) mats[key] = [];
       if (mats[key].length) return mats[key].pop();
       return new cv.Mat(rows, cols, type);
     }
     function releaseMat(mat) {
-      if (!mat) return;
+      if (!mat || !mat.rows) return;
       const key = `${mat.rows}x${mat.cols}x${mat.type()}`;
       if (!mats[key]) mats[key] = [];
       if (mats[key].length < 10) mats[key].push(mat);
@@ -147,7 +147,6 @@
     // ============ OPENCV INIT ============
     function initOpenCV() {
       return new Promise((resolve, reject) => {
-        // 如果 cv 已經存在且 FS 模組也好了，直接 resolve
         if (window.cv && window.cv.FS) {
           cv = window.cv;
           log('OpenCV.js & FS module fully ready');
@@ -155,9 +154,8 @@
           return;
         }
         
-        // 否則，重新定義或掛載初始化成功的回調
-        const oldCallback = window.cv ? window.cv.onRuntimeInitialized : null;
         window.cv = window.cv || {};
+        const oldCallback = window.cv.onRuntimeInitialized;
         window.cv.onRuntimeInitialized = () => {
           if (oldCallback) oldCallback();
           cv = window.cv;
@@ -165,7 +163,6 @@
           resolve();
         };
         
-        // 60秒逾時防護
         setTimeout(() => {
           if (window.cv && window.cv.FS) {
             cv = window.cv;
@@ -174,24 +171,6 @@
             reject(new Error('OpenCV.js runtime init timeout (FS missing)'));
           }
         }, 60000);
-      });
-    }
-    function initOpenCV_Vx() {
-      return new Promise((resolve, reject) => {
-        if (window.cv) {
-          cv = window.cv;
-          log('OpenCV.js already loaded');
-          resolve();
-        } else {
-          window.cv = {
-            onRuntimeInitialized: () => {
-              cv = window.cv;
-              log('OpenCV.js ready');
-              resolve();
-            }
-          };
-          setTimeout(() => reject(new Error('OpenCV.js timeout')), 60000);
-        }
       });
     }
     
@@ -223,7 +202,8 @@
       tesseract = await Tesseract.createWorker('eng', 1, {
         logger: m => console.log('[Tesseract]', m.status, m.progress || ''),
         workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
-        langPath: 'https://tessdata.projectnaptha.com/4.0.0/',
+        // 🛠️ 修正：換成 jsDelivr 穩定的語言包路徑
+        langPath: 'https://cdn.jsdelivr.net/npm/@trevorstarick/tessdata@1.0.3/', 
         corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/tesseract-core.wasm.js'
       });
       await tesseract.setParameters({
@@ -234,16 +214,14 @@
     }
     
     // ============ CAMERA ============
-    // 💡 確保 startCamera 暴露在全域作用域
     async function startCamera() {
       try {
-        // 🛠️ 修正：在啟動相機前，確保全域變數都有順利拿到實體
         video = $('video');
         overlay = $('overlay');
         cropCanvas = $('cropCanvas');
 
         if (!video || !overlay) {
-          throw new Error('Required DOM elements (video or overlay) not found!');
+          throw new Error('Required DOM elements not found!');
         }
 
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -289,30 +267,33 @@
     }
     
     async function detectFrame() {
-      if (isDetecting || !video || video.readyState < 2) return;
+      // 🛠️ 修正：加入防禦防線，避免 cv 尚未載入就執行導致 CV_8UC4 報錯
+      if (!cv || isDetecting || !video || video.readyState < 2) return;
       isDetecting = true;
       const t0 = performance.now();
       
       try {
-        const src = getMat(video.videoHeight, video.videoWidth, cv.CV_8UC4, 'src');
+        const src = getMat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
         cv.cvtColor(video, src, cv.COLOR_RGBA2BGR);
         
-        // 🛠️ 修正：將變數命名為 scal，避免命名衝突
         const scal = Math.min(DET_INPUT_SIZE / src.cols, DET_INPUT_SIZE / src.rows);
         const newW = Math.round(src.cols * scal);
         const newH = Math.round(src.rows * scal);
-        const resized = getMat(newH, newW, cv.CV_8UC3, 'resized');
+        const resized = getMat(newH, newW, cv.CV_8UC3);
         cv.resize(src, resized, new cv.Size(newW, newH));
         
         const top = Math.floor((DET_INPUT_SIZE - newH) / 2);
         const bottom = DET_INPUT_SIZE - newH - top;
         const left = Math.floor((DET_INPUT_SIZE - newW) / 2);
         const right = DET_INPUT_SIZE - newW - left;
+        
+        // 🛠️ 修正：明確宣告並建立 inp 矩陣，解決 ReferenceError 問題
+        const inp = getMat(DET_INPUT_SIZE, DET_INPUT_SIZE, cv.CV_8UC3);
         cv.copyMakeBorder(resized, inp, top, bottom, left, right, cv.BORDER_CONSTANT, new cv.Scalar(114, 114, 114));
         
         const mean = [0.485, 0.456, 0.406];
         const std = [0.229, 0.224, 0.225];
-        const normScale = 1/255.0; // 🛠️ 修正：這裡使用 normScale，不與前面衝突
+        const normScale = 1/255.0; 
         const blob = cv.dnn.blobFromImage(inp, normScale, new cv.Size(DET_INPUT_SIZE, DET_INPUT_SIZE), 
           new cv.Scalar(0,0,0), true, false); 
         
@@ -334,12 +315,12 @@
         net.forward(outs);
         
         const probMap = outs.get(0);
-        const probMat = getMat(probMap.size[2], probMap.size[3], cv.CV_32FC1, 'probMat');
+        const probMat = getMat(probMap.size[2], probMap.size[3], cv.CV_32FC1);
         const probData = probMap.data32F;
         const probMatData = probMat.data32F;
         for (let i = 0; i < probData.length; i++) probMatData[i] = probData[i];
         
-        const binMat = getMat(probMat.rows, probMat.cols, cv.CV_8UC1, 'binMat');
+        const binMat = getMat(probMat.rows, probMat.cols, cv.CV_8UC1);
         cv.threshold(probMat, binMat, SCORE_THRESH, 1, cv.THRESH_BINARY);
         
         const contours = new cv.MatVector();
@@ -359,7 +340,6 @@
           
           const box = [];
           for (let j = 0; j < 4; j++) {
-            // 🛠️ 修正：這裡也同步使用 scal 還原真實座標
             const x = (pts[j].x - left) / scal;
             const y = (pts[j].y - top) / scal;
             box.push({ x: Math.max(0, Math.min(origW, x)), y: Math.max(0, Math.min(origH, y)) });
@@ -376,10 +356,18 @@
         $('detTime').textContent = detTime.toFixed(1);
         $('detCount').textContent = lastDetectedBoxes.length;
         
-        probMap.delete(); probMat.delete(); binMat.delete();
-        contours.delete(); hierarchy.delete();
-        releaseMat(src); releaseMat(inp); releaseMat(resized);
+        // 🛠️ 修正：嚴格做好 OpenCV WebAssembly 的記憶體回收處理，防止分頁閃退
+        probMap.delete(); 
+        outs.delete();
+        contours.delete(); 
+        hierarchy.delete();
         blob.delete();
+        
+        releaseMat(src); 
+        releaseMat(resized);
+        releaseMat(inp); 
+        releaseMat(probMat); 
+        releaseMat(binMat);
         
       } catch (e) {
         console.error('Detection error:', e);
@@ -475,12 +463,12 @@
         const dstPts = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, outW, 0, outW, outH, 0, outH]);
         const M = cv.getPerspectiveTransform(srcPts, dstPts);
         
-        const src = getMat(video.videoHeight, video.videoWidth, cv.CV_8UC4, 'src_ocr');
+        const src = getMat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
         cv.cvtColor(video, src, cv.COLOR_RGBA2BGR);
-        const warped = getMat(outH, outW, cv.CV_8UC3, 'warped');
+        const warped = getMat(outH, outW, cv.CV_8UC3);
         cv.warpPerspective(src, warped, M, new cv.Size(outW, outH), cv.INTER_CUBIC);
         
-        const gray = getMat(outH, outW, cv.CV_8UC1, 'gray');
+        const gray = getMat(outH, outW, cv.CV_8UC1);
         cv.cvtColor(warped, gray, cv.COLOR_BGR2GRAY);
         cv.threshold(gray, gray, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU);
         
@@ -497,8 +485,8 @@
         $('ocrText').textContent = cleaned || '(no text recognized)';
         
         srcPts.delete(); dstPts.delete(); M.delete();
-        releaseMat(src); releaseMat(warped); releaseMat(gray);
         pngMat.delete();
+        releaseMat(src); releaseMat(warped); releaseMat(gray);
         
       } catch (e) {
         console.error('OCR error:', e);
@@ -528,12 +516,10 @@
     // ============ MAIN ============
     async function main() {
       try {
-        // 🛠️ 修正 1：網頁一讀取，優先在最一開始獲取全域 DOM 元素物件
         video = $('video');
         overlay = $('overlay');
         cropCanvas = $('cropCanvas');
 
-        // 🛠️ 修正 2：確保元素存在後再綁定監聽事件，避免隨後的代碼因為 null 報錯崩潰
         if (overlay) {
           overlay.addEventListener('click', async (e) => {
             if (lastDetectedBoxes.length === 0) return;
@@ -566,8 +552,6 @@
           log('Click listener successfully attached.');
         }
 
-        // 🛠️ 修正 3：更換外部 CDN（原 opencv.js 有 CORS 限制，這裡使用 cdnjs 穩定版）
-        // 請確保你的外部引入 script 有一併修正
         await initOpenCV();
         await loadModel();
         await initTesseract();
@@ -578,8 +562,9 @@
       }
     }
     
-    // 啟動主執行緒
-    main();
-  </script>
+    window.onload = () => {
+      main();
+    };
+</script>
 </body>
 </html>
