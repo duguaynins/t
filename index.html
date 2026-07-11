@@ -1,408 +1,160 @@
-
 <!DOCTYPE html>
 <html lang="auto">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>nins / QR-CROP.SYS</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NES-8-BIT-CAMERA</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: #000;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      color: #f8f8f8;
+      font-family: 'Courier New', Courier, monospace;
+    }
 
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: 'Courier New', 'Consolas', monospace;
-  background: #fff; color: #000; height: 100vh; display: flex; flex-direction: column;
-  overflow: hidden; cursor: default;
-}
-::selection { background: #000; color: #fff; }
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #fff; }
-::-webkit-scrollbar-thumb { background: #000; border-radius: 0; }
-::-webkit-scrollbar-thumb:hover { background: #333; }
+    /* 核心修改：讓容器在保持 4:3 的情況下，拉到視窗的最大極限 */
+    .screen-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      max-width: calc(100vh * 4 / 3); /* 當視窗太寬時，寬度限制在 4:3 */
+      max-height: calc(100vw * 3 / 4); /* 當視窗太高時，高度限制在 4:3 */
+      aspect-ratio: 4 / 3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 0 50px rgba(0,0,0,1);
+    }
 
-/* 工具列：支援手機換行，固定置頂 */
-.toolbar {
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 12px; background: #fff;
-  border-bottom: 3px double #000; flex-wrap: wrap;
-  position: sticky; top: 0; z-index: 10;
-}
-.toolbar h1 {
-  font-size: 0.75rem; color: #000; margin-right: 8px;
-  letter-spacing: 2px; text-transform: uppercase;
-  padding: 2px 6px; border: 1px solid #000;
-}
-.toolbar .cursor-blink { animation: blink 1s step-end infinite; }
-@keyframes blink { 50% { opacity: 0; } }
+    canvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      object-fit: contain;
+    }
 
-.btn {
-  display: inline-block;
-  background: #fff; color: #000; border: 2px solid #000;
-  padding: 5px 12px; cursor: pointer; font-size: 0.7rem;
-  font-family: 'Courier New', monospace;
-  text-transform: uppercase; letter-spacing: 1px;
-  transition: none; font-weight: bold;
-  text-align: center;
-}
-.btn:hover:not(:disabled) { background: #000; color: #fff; }
-.btn:active:not(:disabled) { background: #333; color: #fff; }
-.btn:disabled { opacity: .3; cursor: not-allowed; border-style: dashed; }
-.btn.outline { opacity: .7; }
-.btn.outline:hover { opacity: 1; background: #000; color: #fff; }
-.btn.active { background: #000; color: #fff; }
+    /* CRT 螢幕掃描線效果（自動適應縮放） */
+    .screen-container::after {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      background-size: 100% 6px, 6px 100%; /* 微調掃描線密度以配合大螢幕 */
+      pointer-events: none;
+      z-index: 2;
+    }
 
-/* 統一手機排版規格：垂直單欄，允許上下滑動 */
-.main { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 12px; gap: 12px; box-sizing: border-box; }
+    video { display: none; }
 
-.workspace { display: flex; flex-direction: column; overflow: visible; gap: 12px; }
-
-.panel { display: flex; flex-direction: column; border: 1px solid #000; margin-bottom: 4px; height: 100%; }
-.panel-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 12px; background: #f0f0f0; border-bottom: 1px solid #000;
-  font-size: 0.7rem; color: #000; text-transform: uppercase; letter-spacing: 1px;
-  font-weight: bold;
-}
-.panel-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; }
-
-/* 圖片框架優化：符合手機垂直高度，避免單一元件佔滿整個螢幕 */
-/* 修改這段樣式，限制最大高度不突破手機視窗 */
-/* 修正：允許影片與畫布根據自身比例正常展開拉伸，不再限制 max-height */
-/* 修正：限制內部影片和畫布的最大尺寸，完美保持比例，絕不爆開 */
-.img-frame video, .img-frame canvas {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-
-  object-fit: contain;
-  display: block;
-}
-
-/* 修正：外層框架設定合理的自適應高度（利用 vh 確保手機畫面放得下） */
-.img-frame {
-  border: 1px solid #000;
-  background: #fafafa;
-  position: relative;
-  overflow: hidden;
-  flex: 1;
-  min-height: 0;
-}
-
-.no-signal {
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: #fff; color: #888; font-size: 0.75rem; letter-spacing: 2px;
-  z-index: 2;
-}
-.no-signal span { border: 1px dashed #888; padding: 4px 8px; }
-.no-signal.hide { display: none; }
-.statusbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 12px; background: #f0f0f0; border-top: 3px double #000;
-  font-size: 0.65rem; color: #000; text-transform: uppercase; letter-spacing: 1px;
-  font-weight: bold; margin-top: auto;
-}
-.statusbar .blink { animation: blink 1s step-end infinite; }
-
-.modal-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(255,255,255,0.9); display: none; align-items: center; justify-content: center; z-index: 1000;
-}
-.modal-overlay.show { display: flex; }
-.modal { background: #fff; border: 3px double #000; padding: 16px 24px; max-width: 360px; width: 90%; }
-.modal-title { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid #000; padding-bottom: 4px; }
-.modal-message { font-size: 0.7rem; line-height: 1.5; margin-bottom: 16px; color: #333; }
-</style>
+    #ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 8px 12px;
+      border: 2px solid #f8f8f8;
+      font-size: 14px;
+      text-transform: uppercase;
+      z-index: 10;
+      box-shadow: 3px 3px 0px #e45c10;
+    }
+  </style>
 </head>
 <body>
 
-<div class="toolbar">
-  <h1>C:\&gt;<span class="cursor-blink">&#9608;</span></h1>
-  <div style="font-size:0.75rem; font-weight:bold; letter-spacing:1px; margin-right:12px;">QR-LIVE.SYS v3.3</div>
+  <div id="ui">PAUSE<br>1P READY<br>NES_FULLSCREEN</div>
   
-  <button id="videoBtn" class="btn">[ START CAMERA ]</button>
+  <video id="rawVideo" autoplay playsinline></video>
   
-  <span id="dotInfo" style="font-size:0.65rem; color:#666; margin-left:auto; letter-spacing:1px; text-transform:uppercase;">STANDBY</span>
-</div>
-
-<div class="main">
-  <div class="workspace" id="cameraPanel" style="flex:1; min-height:0;">
-    <div class="panel" style="flex:1; min-height:0;">
-      <div class="panel-header">
-        <span>&gt; LIVE CAMERA FEED</span>
-        <span style="opacity:0.5;">INPUT</span>
-      </div>
-      <div class="panel-body" style="flex:1; min-height:0;">
-        <div class="img-frame">
-          <video id="videoFeed" autoplay playsinline muted style="width:100%; height:100%;"></video>
-          <div class="no-signal" id="srcSignal"><span>AWAITING CAMERA STREAM</span></div>
-        </div>
-      </div>
-    </div>
+  <div class="screen-container">
+    <canvas id="nesCanvas"></canvas>
   </div>
 
-  <div class="workspace" id="resultPanel" style="display: block; flex:1; min-height:0;">
-      <div class="panel" style="flex:1; min-height:0;">
-        <div class="panel-header">
-          <span>&gt; QR RESULT</span>
-          <button id="downloadQr" class="btn outline" style="padding:2px 6px; font-size:0.6rem;" disabled>SAVE</button>
-        </div>
-        <div class="panel-body" style="flex:1; min-height:0;">
-          <div style="display:flex; gap:12px; height:100%;">
-            <div class="img-frame" style="flex:1;">
-              <canvas id="qrCanvas"></canvas>
-              <div class="no-signal" id="qrSignal"><span>NO QR STEP</span></div>
-            </div>
-            <div style="flex:1; display:flex; flex-direction:column; gap:8px; min-height:0;">
-              <div style="font-weight:bold; font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid #000; padding-bottom:4px;">Normalized URL</div>
-              <div id="qrlBefore" style="font-size:0.75rem; word-break:break-all; background:#f5f5f5; padding:6px; border:1px solid #ccc; flex:1;">—</div>
-              <div style="font-weight:bold; font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid #000; padding-bottom:4px;">Hostname</div>
-              <div id="qrlAfter" style="font-size:0.75rem; word-break:break-all; padding:6px; border:1px solid #ccc;">—</div>
-              <div id="qrlStatus" style="padding:6px; text-align:center; font-size:0.7rem; font-weight:bold; text-transform:uppercase; letter-spacing:1px; border:1px solid #ccc; background:#ccc; color:#666;">PENDING</div>
-            </div>
-          </div>
-        </div>
-      </div>
-  </div>
-</div>
+  <script>
+    const video = document.getElementById('rawVideo');
+    const canvas = document.getElementById('nesCanvas');
+    const ctx = canvas.getContext('2d');
 
-<div class="statusbar">
-  <span>C:\&gt; <span class="blink">&#9608;</span> QR-LIVE.SYS v3.0</span>
-  <span id="statusText">READY</span>
-  <span id="statusTime"></span>
-</div>
+    // NES 標準寬度 256
+    const NES_WIDTH = 256; 
 
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <div class="modal-title" id="modalTitle">SYSTEM ALERT</div>
-    <div class="modal-message" id="modalMessage">MESSAGE BODY</div>
-    <button class="btn" id="modalBtn" style="width:100%;">[ CLOSE ]</button>
-  </div>
-</div>
+    // NES 經典 16 色調色盤
+    const NES_PALETTE = [
+      [116, 116, 116], [0, 0, 252],     [0, 0, 188],     [104, 4, 148],
+      [216, 40, 0],    [188, 148, 16],  [0, 112, 0],     [0, 132, 0],
+      [252, 252, 252], [60, 188, 252],  [148, 88, 252],  [248, 120, 248],
+      [252, 116, 96],  [252, 216, 84],  [168, 204, 0],   [0, 0, 0]
+    ];
 
-<script src="https://unpkg.com/@zxing/browser@latest"></script>
-<script src="https://unpkg.com/@zxing/library@latest"></script>
+    navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'environment', width: 640, height: 480 } 
+    })
+    .then(stream => { 
+      video.srcObject = stream;
+      video.onloadedmetadata = () => {
+        // 設定 Canvas 內部的真實 8-bit 解析度
+        canvas.width = NES_WIDTH;
+        canvas.height = Math.floor(NES_WIDTH * (3 / 4)); // 4:3 比例 (192)
+        
+        ctx.imageSmoothingEnabled = false;
+        
+        // 啟動更順暢的 requestAnimationFrame 渲染循環
+        requestAnimationFrame(loop);
+      };
+    })
+    .catch(err => { console.error(err); });
 
-<script>
-const videoBtn = document.getElementById("videoBtn");
-const videoFeed = document.getElementById("videoFeed");
-const qrCanvas = document.getElementById("qrCanvas");
-
-const downloadQr = document.getElementById("downloadQr");
-const dotInfo = document.getElementById("dotInfo");
-const modalOverlay = document.getElementById("modalOverlay");
-const modalTitle = document.getElementById("modalTitle");
-const modalMessage = document.getElementById("modalMessage");
-const modalBtn = document.getElementById("modalBtn");
-const statusText = document.getElementById("statusText");
-const statusTime = document.getElementById("statusTime");
-
-const srcSignal = document.getElementById("srcSignal");
-const qrSignal = document.getElementById("qrSignal");
-const qrlBefore = document.getElementById("qrlBefore");
-const qrlAfter = document.getElementById("qrlAfter");
-const qrlStatus = document.getElementById("qrlStatus");
-const cameraPanel = document.getElementById("cameraPanel");
-const resultPanel = document.getElementById("resultPanel");
-let codeReader = null;
-let isScanning = false;
-
-function showModal(title, message) {
-  modalTitle.textContent = "! " + title;
-  modalMessage.textContent = message;
-  modalOverlay.classList.add("show");
-}
-function hideModal() { modalOverlay.classList.remove("show"); }
-function setStatus(msg) { statusText.textContent = msg; }
-
-function normalize(input) {
-  input = input.trim();
-  if (!input) return "";
-  if (!/^https?:\/\//i.test(input)) {
-    input = "https://" + input;
-  }
-  try {
-    const url = new URL(input);
-    url.hostname = url.hostname.toLowerCase();
-    url.protocol = url.protocol.toLowerCase();
-    url.hash = "";
-    if ((url.protocol === "http:" && url.port === "80") ||
-        (url.protocol === "https:" && url.port === "443")) {
-      url.port = "";
+    function loop() {
+      drawNESFrame();
+      requestAnimationFrame(loop); // 自動同步螢幕刷新率
     }
-    return url.toString();
-  } catch(e) {
-    return null;
-  }
-}
 
-modalBtn.onclick = hideModal;
+    function drawNESFrame() {
+      if (video.paused || video.ended) return;
 
-codeReader = new ZXing.BrowserQRCodeReader();
+      // 1. 將視訊格縮小繪製到畫布
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
 
-videoBtn.onclick = async () => {
-  if (isScanning) {
-    stopScanning();
-  } else {
-    await startScanning();
-  }
-};
+      // 2. 8-Bit 色彩對應運算
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
 
-let controls;  ///***
-async function startScanning() {
-  
-  cameraPanel.style.display = "block";
-  resultPanel.style.display = "none";
+        let closestColor = NES_PALETTE[0];
+        let minDistance = Infinity;
 
-  try {
-    isScanning = true;
-    videoBtn.textContent = "[ STOP CAMERA ]";
-    videoBtn.classList.add("active");
-    srcSignal.classList.add("hide");
-    setStatus("INITIALIZING CAMERA...");
+        for (let j = 0; j < NES_PALETTE.length; j++) {
+          const pr = NES_PALETTE[j][0];
+          const pg = NES_PALETTE[j][1];
+          const pb = NES_PALETTE[j][2];
 
-    controls = await codeReader.decodeFromVideoDevice(undefined, videoFeed, (result, error) => {
-      if (result) {
-        processFrame(result);
+          const distance = Math.pow(r - pr, 2) + Math.pow(g - pg, 2) + Math.pow(b - pb, 2);
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestColor = NES_PALETTE[j];
+          }
+        }
+
+        data[i]     = closestColor[0];
+        data[i + 1] = closestColor[1];
+        data[i + 2] = closestColor[2];
       }
-      if (error && !(error instanceof ZXing.NotFoundException)) {
-        console.error(error);
-      }
-    });
 
-  } catch (err) {
-    console.error(err);
-    showModal("CAMERA ERROR", "UNABLE TO ACCESS MEDIA VIDEO DEVICE.");
-    stopScanning();
-  }
-}
-
-function stopScanning() {
-  
-  cameraPanel.style.display = "none";
-  resultPanel.style.display = "flex";  ///block
-
-  isScanning = false;
-  videoBtn.textContent = "[ START CAMERA ]";
-  videoBtn.classList.remove("active");
-  srcSignal.classList.remove("hide");
-  ///qrSignal.classList.remove("hide");
-  qrSignal.classList.add("hide");
-  dotInfo.textContent = "STANDBY";
-  setStatus("READY");
-  
-  codeReader.reset();
-  controls.stop();
-  videoFeed.srcObject = null;
-}
-
-function processFrame(resultQR) {
-  const qrPoints = resultQR.resultPoints;
-  const qrText = resultQR.getText();
-
-  if (!qrPoints || qrPoints.length < 3) return;
-
-  let minX = Infinity, maxX = -Infinity;
-  let minY = Infinity, maxY = -Infinity;
-  qrPoints.forEach(p => {
-    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
-    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
-  });
-
-  const vW = videoFeed.videoWidth;
-  const vH = videoFeed.videoHeight;
-  if (!vW || !vH) return;
-
-  const tempCanvas = document.createElement("canvas");
-  tempCanvas.width = vW;
-  tempCanvas.height = vH;
-  const tempCtx = tempCanvas.getContext("2d");
-  tempCtx.drawImage(videoFeed, 0, 0, vW, vH);
-
-  const qrPad = Math.max(20, Math.round((maxX - minX) * 0.12));
-  const sx = Math.max(0, minX - qrPad);
-  const sy = Math.max(0, minY - qrPad);
-  const sw = Math.min(vW - sx, (maxX - minX) + qrPad * 2);
-  const sh = Math.min(vH - sy, (maxY - minY) + qrPad * 2);
-
-  qrCanvas.width = sw;
-  qrCanvas.height = sh;
-  const qrCtx = qrCanvas.getContext("2d");
-  qrCtx.drawImage(tempCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
-  ///qrSignal.classList.add("hide");
-
-  dotInfo.textContent = `QR: ${qrText}`;
-  downloadQr.disabled = false;
-  setStatus(`DECODED: ${qrText}`);
-  ///stopScanning();
-
-  const normalized = normalize(qrText);
-  if (normalized) {
-    ///stopScanning();
-    
-    const urlObj = new URL(normalized);
-    const hostname = urlObj.hostname;
-    qrlBefore.textContent = normalized;
-    qrlAfter.textContent = hostname;
-    ///stopScanning();
-
-    const target = "google.com";
-    const parts = hostname.toLowerCase().split(".");
-
-    const last = parts.at(-1);      // 倒數第一
-    const second = parts.at(-2);    // 倒數第二
-
-    console.log(last, second);
-
-    if (last === "gov" || second === "gov") {qrlStatus.style.background = "green";qrlStatus.textContent = "TRUSTED";}
-    else if (last === "edu" || second === "edu") {qrlStatus.style.background = "green";qrlStatus.textContent = "TRUSTED";}
-    else {qrlStatus.style.background = "#ccc";qrlStatus.textContent = "UNKNOWN";}
-    qrlStatus.style.color = "white";
-    stopScanning();
-    
-/*
-    if (hostname.endsWith(target)) {
-      qrlStatus.textContent = "TRUSTED";
-      qrlStatus.style.background = "green";
-      qrlStatus.style.color = "white";
-      qrlStatus.style.borderColor = "green";
-    } else {
-      qrlStatus.textContent = "UNTRUSTED";
-      qrlStatus.style.background = "#ccc";
-      qrlStatus.style.color = "#666";
-      qrlStatus.style.borderColor = "#ccc";
-    }*/
-
-  } else {/*
-    qrlBefore.textContent = qrText;
-    qrlAfter.textContent = "URL???";
-    qrlStatus.textContent = "INVALID";
-    qrlStatus.style.background = "#fff";
-    qrlStatus.style.color = "#c00";
-    qrlStatus.style.borderColor = "#c00";*/
-  }
-
-  ///cameraPanel.style.display = "none";
-  ///resultPanel.style.display = "flex";  ///block
-}
-
-
-downloadQr.onclick = () => {
-  const link = document.createElement("a");
-  link.download = "qr-matrix_crop.png";
-  link.href = qrCanvas.toDataURL("image/png");
-  link.click();
-};
-
-function updateClock() {
-  const now = new Date();
-  statusTime.textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
-}
-updateClock();
-setInterval(updateClock, 1000);
-startScanning();
-</script>
+      // 3. 放回像素資料（CSS 會負責將其等比例放大到視窗最大）
+      ctx.putImageData(imgData, 0, 0);
+    }
+  </script>
 </body>
 </html>
