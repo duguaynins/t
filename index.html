@@ -1,101 +1,328 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<title>DeviceOrientation</title>
-<style>
-body {
-  background: black;
-  color: white;
-  font-family: Arial;
-  text-align: center;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拍照文字偵測</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        /* 讓身體直接佔滿整個螢幕，並隱藏滾動條 */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000; /* 全黑色背景 */
+            color: #fff;
+            font-family: Arial, sans-serif;
+            overflow: hidden; 
+        }
 
-.box {
-  font-size: 24px;
-  margin: 20px;
-}
-</style>
+        /* 頂部標題與狀態（浮動在最上層，不干擾點擊） */
+        .header-panel {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;    /* 垂直方向置中 */
+            justify-content: center; /* 水平方向置中 */
+            text-align: center;      /* 確保多行文字時也置中 */
+            width: 90%;
+            max-width: 400px;        /* 限制最大寬度，避免在平板/電腦上拉得太寬 */
+            pointer-events: none;    /* 讓點擊可以穿過 */
+        }
+        h1 { 
+            margin: 0; 
+            font-size: 1.3rem; 
+            text-align: center; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+            color: #00ff00; /* 綠色科技感 */
+        }
+        #status { 
+            font-size: 0.9rem; 
+            color: #ccc; 
+            text-align: center; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid #222;
+        }
+
+        /* 滿版中央容器 */
+        .container {
+            width: 100vw;
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000000;
+            position: relative;
+        }
+
+        /* 核心修改：超吸睛的滿版 100dvh 拍照按鈕 */
+        .upload-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+            border: 4px dashed #00ff00; /* 滿版綠色虛線框 */
+            box-sizing: border-box;
+            background-color: #000000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 2;
+            transition: all 0.3s ease;
+            /* 呼吸燈動畫效果 */
+            animation: borderPulse 2s infinite alternate;
+        }
+        .upload-btn .icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+        .upload-btn .text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #00ff00;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px rgba(0,255,0,0.6);
+        }
+        #fileInput { display: none; }
+
+        /* 綠色虛線框呼吸燈動畫 */
+        @keyframes borderPulse {
+            0% { border-color: #005500; box-shadow: inset 0 0 20px rgba(0,255,0,0.1); }
+            100% { border-color: #00ff00; box-shadow: inset 0 0 40px rgba(0,255,0,0.3); }
+        }
+
+        /* 畫布：相片等比例縮放，絕不超出螢幕 */
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            cursor: pointer;
+            z-index: 2;
+            display: none; /* 拍照前隱藏 */
+        }
+
+        /* 複製成功的彈出提示 */
+        #resultToast {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            padding: 12px 24px;
+            background-color: #28a745;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="box">
-Alpha: <span id="alpha">0</span>°
-</div>
+    <!-- 頂部面板 -->
+    <div class="header-panel">
+    </div>
 
-<div class="box">
-Beta: <span id="beta">0</span>°
-</div>
+    <!-- 主要容器 -->
+    <div class="container" id="canvasContainer">
+        
+        <!-- 畫布（拍照後才顯示） -->
+        <canvas id="canvas"></canvas>
 
-<div class="box">
-Gamma: <span id="gamma">0</span>°
-</div>
+        <!-- 滿版 100dvh 觸控拍照按鈕 -->
+        <label class="upload-btn" id="uploadBtn">
+            <div id="status">正在載入辨識引擎，請稍候...</div>
+            <input type="file" id="fileInput" accept="image/*" capture="environment">
+        </label>
 
-<div class="box">
-Heading: <span id="heading">0</span>°
-</div>
+    </div>
 
+    <!-- 複製提示 -->
+    <div id="resultToast" style="display: none;"></div>
 
-<script>
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const statusDiv = document.getElementById('status');
+        const resultToast = document.getElementById('resultToast');
+        
+        let worker = null;
+        let detectedWords = []; 
+        let currentImg = null; // 儲存目前載入的圖片物件，方便重新框選時重繪
+        let selectedWord = null; // 儲存當前被點選的文字物件
 
-function startOrientation(){
+        async function initOCR() {
+            try {
+                worker = await Tesseract.createWorker('eng');
+                statusDiv.innerText = "引擎就緒，請點擊螢幕拍照。";
+            } catch (e) {
+                statusDiv.innerText = "引擎載入失敗。";
+                console.error(e);
+            }
+        }
 
-  window.addEventListener(
-    "deviceorientation",
-    function(event){
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-      let alpha = event.alpha;
-      let beta  = event.beta;
-      let gamma = event.gamma;
-      let heading = event.webkitCompassHeading;
+            statusDiv.innerText = "正在處理高畫質相片...";
+            resultToast.style.display = "none"; 
+            selectedWord = null;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    currentImg = img; // 暫存圖片
+                    processImage(img);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
 
+        async function processImage(img) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            
+            ///uploadBtn.style.display = "none";
+            canvas.style.display = "block";
+            uploadBtn.style.opacity = '0.5';
+            uploadBtn.style.pointerEvents = 'none';
+            
+            ctx.drawImage(img, 0, 0);
+            
+            if (!worker) return;
+            statusDiv.innerText = "正在精準辨識所有文字與符號";///🔍 
+            
+            try {
+                const { data: { words } } = await worker.recognize(canvas);
+                detectedWords = words.filter(w => w.text.trim().length > 0);
+                
+                // 繪製初始狀態
+                redrawCanvas();
+                
+                statusDiv.innerText = `辨識完成！共偵測到 ${detectedWords.length} 個項目。點擊空白處可重拍。`;
+            } catch (error) {
+                statusDiv.innerText = "辨識錯誤。";
+                console.error(error);
+            }
+        }
 
-      document.getElementById("alpha").innerHTML =
-        alpha ? alpha.toFixed(1) : 0;
+        // 重新繪製畫布的核心函數
+        function redrawCanvas() {
+            if (!currentImg) return;
+            // 清空並重新畫底圖
+            ctx.drawImage(currentImg, 0, 0);
+            
+            const baseScale = Math.max(canvas.width, canvas.height) / 1000; 
+            const lineWidthBlack = Math.max(4, 6 * baseScale);
+            const lineWidthWhite = Math.max(2, 3 * baseScale);
+            const fontSize = Math.max(16, 24 * baseScale);
 
-      document.getElementById("beta").innerHTML =
-        beta ? beta.toFixed(1) : 0;
+            detectedWords.forEach(word => {
+                const { x0, y0, x1, y1 } = word.bbox;
+                const width = x1 - x0;
+                const height = y1 - y0;
 
-      document.getElementById("gamma").innerHTML =
-        gamma ? gamma.toFixed(1) : 0;
+                ctx.save();
+                
+                // 如果這個字框是當前被點選的，換成耀眼的「科技綠」框線
+                if (selectedWord && selectedWord === word) {
+                    ctx.strokeStyle = '#000000'; ctx.lineWidth = lineWidthBlack;
+                    ctx.strokeRect(x0, y0, width, height);
+                    ctx.strokeStyle = '#00ff00'; ctx.lineWidth = lineWidthWhite + 2; // 加粗一點
+                    ctx.strokeRect(x0, y0, width, height);
 
-      document.getElementById("heading").innerHTML =
-        heading ? heading.toFixed(1) : 0;
+                    ctx.font = `bold ${fontSize + 2}px Arial`;
+                    ctx.fillStyle = '#000000';
+                    ctx.fillText(word.text, x0, y0 - (baseScale * 6));
+                    ctx.fillStyle = '#00ff00';
+                    ctx.fillText(word.text, x0 + baseScale, y0 - (baseScale * 5));
+                } else {
+                    // 一般未點選的字框（原本的黑白框）
+                    ctx.strokeStyle = '#000000'; ctx.lineWidth = lineWidthBlack;
+                    ctx.strokeRect(x0, y0, width, height);
+                    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = lineWidthWhite;
+                    ctx.strokeRect(x0, y0, width, height);
 
-    }
-  );
+                    ctx.font = `bold ${fontSize}px Arial`;
+                    ctx.fillStyle = '#000000';
+                    ctx.fillText(word.text, x0, y0 - (baseScale * 6));
+                    ctx.fillText(word.text, x0 + (baseScale * 2), y0 - (baseScale * 6));
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(word.text, x0 + baseScale, y0 - (baseScale * 5));
+                }
+                
+                ctx.restore();
+            });
+        }
 
-}
+        // 綁定於 body 的全域點擊事件
+        document.body.addEventListener('click', function(event) {
+            if (detectedWords.length === 0) return;
 
+            // 檢查是否點擊在 Canvas 範圍內
+            if (event.target === canvas) {
+                const rect = canvas.getBoundingClientRect();
+                const clickX = event.clientX - rect.left;
+                const clickY = event.clientY - rect.top;
 
-// iOS 需要權限
-if(
- typeof DeviceOrientationEvent !== "undefined" &&
- typeof DeviceOrientationEvent.requestPermission === "function"
-){
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const originalPhotoX = clickX * scaleX;
+                const originalPhotoY = clickY * scaleY;
 
- document.body.innerHTML +=
- '<button id="btn">啟動感測器</button>';
+                const clickedWord = detectedWords.find(word => {
+                    const { x0, y0, x1, y1 } = word.bbox;
+                    return originalPhotoX >= x0 && originalPhotoX <= x1 &&
+                           originalPhotoY >= y0 && originalPhotoY <= y1;
+                });
 
- document.getElementById("btn").onclick = async ()=>{
+                if (clickedWord) {
+                    // 【點中字框】：更新選取狀態、複製文字、重框
+                    selectedWord = clickedWord; 
+                    redrawCanvas(); // 觸發重新框選（點中的會變成綠框）
 
-   let permission =
-     await DeviceOrientationEvent.requestPermission();
+                    const rawText = clickedWord.text.trim(); 
+                    resultToast.innerText = `👉 你點選了內容：${rawText}`;
+                    ///resultToast.style.display = "block";
 
-   if(permission === "granted"){
-      startOrientation();
-   }
+                    navigator.clipboard.writeText(rawText).then(() => {
+                        statusDiv.innerText = `已複製內容 "${rawText}" 到剪貼簿！點擊空白處可重拍。`;
+                    }).catch(err => {
+                        console.log('複製失敗', err);
+                    });
+                    
+                    return; // 【核心關鍵】成功命中並處理完畢，直接結束事件，不向下執行重拍！
+                }
+            }
 
- };
+            // 【點擊任何其他地方】（點在 Canvas 空白處、或黑色背景）
+            // 只有此時才會判定為需要「重新拍照」
+            statusDiv.innerText = "重新開啟相機...";
+            resultToast.style.display = "none";
+            selectedWord = null;
+            fileInput.click(); 
+        });
 
-}else{
-
- startOrientation();
-
-}
-
-</script>
-
+        window.addEventListener('DOMContentLoaded', initOCR);
+    </script>
 </body>
 </html>
