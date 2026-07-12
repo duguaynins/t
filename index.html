@@ -70,7 +70,7 @@
             left: 0;
             width: 100vw;
             height: 100dvh;
-            border: 4px dashed #00ff00; /* 滿版綠色虛線框 */
+            /* border: 4px dashed #00ff00; 滿版綠色虛線框 */
             box-sizing: border-box;
             background-color: #000000;
             display: flex;
@@ -81,7 +81,7 @@
             z-index: 2;
             transition: all 0.3s ease;
             /* 呼吸燈動畫效果 */
-            animation: borderPulse 2s infinite alternate;
+            /*animation: borderPulse 2s infinite alternate;*/
         }
         .upload-btn .icon {
             font-size: 4rem;
@@ -205,6 +205,7 @@
             canvas.style.display = "block";
             uploadBtn.style.opacity = '0.5';
             uploadBtn.style.pointerEvents = 'none';
+            uploadBtn.style.background = "transparent";
             
             ctx.drawImage(img, 0, 0);
             
@@ -313,13 +314,13 @@
                     return; // 【核心關鍵】成功命中並處理完畢，直接結束事件，不向下執行重拍！
                 }
             }
-
+            /*
             // 【點擊任何其他地方】（點在 Canvas 空白處、或黑色背景）
             // 只有此時才會判定為需要「重新拍照」
             statusDiv.innerText = "重新開啟相機...";
             resultToast.style.display = "none";
             selectedWord = null;
-            fileInput.click(); 
+            fileInput.click(); */
         });
 
         window.addEventListener('DOMContentLoaded', initOCR);
