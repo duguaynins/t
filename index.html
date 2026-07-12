@@ -287,8 +287,12 @@
             
             try {
                 const { data: { words } } = await worker.recognize(canvas);
-                detectedWords = words.filter(w => w.text.trim().length > 0);
-                
+                ///detectedWords = words.filter(w => w.text.trim().length > 0);
+                detectedWords = words.filter(w => {
+                    const text = w.text.trim();
+                    // 這裡直接將 w.confidence 改為 > 80 或 > 85
+                    return text.length > 1 && /[a-zA-Z0-9]/.test(text) && w.confidence > 85; 
+                });
                 redrawCanvas();
                 
                 statusDiv.innerText = `辨識完成！共偵測到 ${detectedWords.length} 個項目。`;
