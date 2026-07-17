@@ -1,73 +1,389 @@
 <!DOCTYPE html>
 <html lang="auto">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nins / FLASH.SYS v3.0</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- PWA Manifest & Color -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#212529">
 
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.log('SW registration failed: ', err);
+                });
+            });
+        }
+    </script>
 
-body {
-    width: 100dvw;
-    height: 100dvh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    background: #fff;
-}
+    <!-- 外部資源: NES.css & Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css/css/nes.min.css" rel="stylesheet">
 
-#qrcode {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+    <!-- Ruffle Player Library -->
+    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
 
-#qrcode img,
-#qrcode canvas {
-    display: block;
-}
-</style>
+    <style>
+        /* 核心變數與重置 */
+        :root {
+            --bg-color: #212529; /* NES Dark 背景 */
+            --text-color: #fff;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Press Start 2P', cursive; 
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px; 
+            overflow: hidden; /* 防止滾動條干擾 */
+        }
+
+        /* ===== TRAVEL 風格頂部收折控制面版 ===== */
+        header.nes-container.is-dark {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            z-index: 100;
+            padding: 1rem;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+            border-bottom: 4px solid #fff;
+        }
+
+        header.nes-container.is-dark.collapsed {
+            transform: translateY(-100%); /* 向上完全隱藏 */
+        }
+
+        /* 頂部切換按鈕 */
+        #header-toggle {
+            position: fixed; 
+            top: 0; 
+            left: 50%; 
+            z-index: 101;
+            transform: translateX(-50%);
+            background: #212529; 
+            color: #fff;
+            border: 4px solid #fff; 
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            padding: 4px 20px; 
+            font-size: 0.85rem;
+            cursor: pointer; 
+            line-height: 1.5;
+            transition: background 0.2s;
+        }
+        #header-toggle:hover { 
+            background: #333; 
+        }
+
+        /* 控制列橫向排版 - 🚀 確保在任何情況下都是一條橫列 */
+        .header-row {
+            display: flex; 
+            flex-direction: row !important; /* 強制橫向不換行 */
+            align-items: center; 
+            gap: 0.8rem;
+            max-width: 900px; 
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* 隱藏原生 file input */
+        input[type=file] {
+            display: none;
+        }
+
+        /* 讓選檔案按鈕寬度自適應且不被擠壓 */
+        .file-label-btn {
+            margin: 0;
+            white-space: nowrap;
+            height: 45px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; /* 🚀 防止在窄螢幕下縮小變形 */
+        }
+
+        /* 下拉選單外層包裹 - 🚀 寬度自適應填滿中間剩餘空間 */
+        .select-wrapper {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .select-wrapper .nes-select {
+            width: 100%;
+        }
+
+        /* 統一控制列元素高度與縮小手機版字型 */
+        .nes-btn, .nes-select select {
+            height: 45px;
+            font-size: 0.75rem !important;
+        }
+
+        /* ===== 主遊戲螢幕容器 ===== */
+        .main-viewport {
+            width: 95%;
+            max-width: 800px;
+            max-height: 85vh; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;  
+            justify-content: center;
+            padding: 0;
+            margin: 0 auto;       
+        }
+
+        .sys-title {
+            font-size: 1rem;
+            text-align: center;
+            margin: 0 0 5px 0;
+        }
+
+        #player-container {
+            width: 100%;
+            aspect-ratio: 4 / 3; 
+            padding: 0 !important;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+        }
+
+        /* 待機畫面文字 */
+        .placeholder-text {
+            font-size: 0.8rem;
+            color: #757575;
+            text-align: center;
+            line-height: 1.7;
+            padding: 20px;
+        }
+
+        #player-container ruffle-player {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        /* ==========================================
+           手機板 RWD 響應式微調
+        ========================================== */
+        @media (max-width: 600px) {
+            html, body {
+                font-size: 11px;
+            }
+
+            .main-viewport {
+                width: 98%;
+            }
+
+            /* 🚀 移除原本在手機上會把 .header-row 轉成垂直直列的設定，保持橫列 */
+            .file-label-btn, .nes-btn, .nes-select select {
+                height: 40px; /* 手機版略微降低高度以節省空間 */
+            }
+        }
+    </style>
 </head>
-
 <body>
 
-<div id="qrcode"></div>
+<!-- TRAVEL 風格頂部手動收折按鈕 -->
+<button id="header-toggle">▲</button>
+
+<!-- 收折式控制面板 (預設為 collapsed 隱藏) -->
+<header class="nes-container is-dark collapsed">
+    <div class="header-row">
+        
+        <!-- BTN: 選擇檔案 -->
+        <label class="nes-btn is-primary file-label-btn">
+            <input id="files-input" type="file" multiple accept=".swf">
+            [ F1 ]
+        </label>
+
+        <!-- SELECT: 下拉選單 -->
+        <div class="select-wrapper">
+            <div class="nes-select is-dark">
+                <select required id="main-select">
+                    <option value="" disabled selected hidden>[ F2 ]</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- RUN: 啟動按鈕 -->
+        <button type="button" class="nes-btn is-success" id="launch-btn" style="white-space: nowrap; flex-shrink: 0;">
+            [ F3 ]
+        </button>
+
+    </div>
+</header>
+
+<!-- 主畫面區 (卡片式螢幕 - 已完美置中) -->
+<main class="main-viewport">
+    <!-- 播放螢幕 -->
+    <section id="player-container" class="nes-container is-dark is-inset">
+        <div class="placeholder-text">
+            *** VIDEO SYSTEM ***<br><br>
+            CLICK [ ▲ ] TOP MENU TO LOAD<br>
+            --------------------<br>
+            INSERT SWF TO START
+        </div>
+    </section>
+
+</main>
 
 <script>
-function getContent() {
-    const params = new URLSearchParams(location.search);
-    return decodeURIComponent(params.get("q") || location.hash.substring(1));
-}
+/* ==========================================
+   Ruffle 全域設定
+========================================== */
+window.RufflePlayer = window.RufflePlayer || {};
+window.RufflePlayer.config = {
+    "contextMenu": "off",
+    "scale": "exactFit",
+    "allowScriptAccess": true
+};
 
-function generateQR() {
-    const text = getContent();
-    const qr = document.getElementById("qrcode");
-    qr.innerHTML = "";
+/* ==========================================
+   DOM 元素宣告
+========================================== */
+const vfs = new Map();
+const BASE_URL = "https://flash.nins.cc/";
 
-    if (!text) return;
+const fileInput = document.getElementById("files-input");
+const mainSelect = document.getElementById("main-select");
+const launchBtn = document.getElementById("launch-btn");
+const container = document.getElementById("player-container");
+const fileLabel = document.querySelector(".file-label-btn");
 
-    // 取視窗最小邊，保留約 5% 邊距
-    const size = Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.95);
+const headerEl = document.querySelector('header');
+const toggleBtn = document.getElementById('header-toggle');
 
-    new QRCode(qr, {
-        text,
-        width: size,
-        height: size,
-        correctLevel: QRCode.CorrectLevel.H
+let player = null;
+
+/* ==========================================
+   TRAVEL 風格面板手動收折控制邏輯
+========================================== */
+toggleBtn.addEventListener('click', () => {
+    const isCollapsed = headerEl.classList.toggle('collapsed');
+    toggleBtn.textContent = isCollapsed ? '▲' : '▼';
+});
+
+/* -------------------------
+   1. VFS 檔案掛載與 UI 更新
+------------------------- */
+fileInput.addEventListener("change", (e) => {
+    const files = [...e.target.files];
+    if (files.length === 0) return;
+
+    // 清空並更新選單
+    mainSelect.innerHTML = '<option value="" disabled selected hidden>[ SELECT SWF ]</option>';
+    
+    files.forEach(file => {
+        const key = file.name.toLowerCase();
+        vfs.set(key, file);
+
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = key;
+        opt.classList.add("is-dark");
+        mainSelect.appendChild(opt);
     });
-}
 
-generateQR();
+    // 更新上傳按鈕上的提示文字
+    fileLabel.childNodes[2].textContent = `[ ${files.length} FILES LOADED ]`;
+    console.log(`[VFS] Mounted ${files.length} files.`);
+});
 
-window.addEventListener("resize", generateQR);
-window.addEventListener("hashchange", generateQR);
+/* -------------------------
+   2. FETCH 攔截 (VFS 核心)
+------------------------- */
+const originalFetch = window.fetch;
+
+window.fetch = async (input, init) => {
+    let url = "";
+
+    if (typeof input === "string") {
+        url = input;
+    } 
+    else if (input && typeof input.url === "string") {
+        url = input.url;
+    } 
+    else {
+        return originalFetch(input, init);
+    }
+
+    const name = url.split('/').pop()?.split('?')[0]?.toLowerCase();
+
+    if (name && vfs.has(name)) {
+        console.log(`%c[VFS HIT]: ${name}`, "color: #92cc41; font-weight: bold;");
+
+        const file = vfs.get(name);
+        
+        try {
+            const buffer = await file.arrayBuffer();
+            return new Response(buffer, {
+                headers: {
+                    "Content-Type": "application/x-shockwave-flash"
+                }
+            });
+        } catch (err) {
+            console.error(`[VFS ERROR] Failed to read ${name}`, err);
+        }
+    }
+
+    return originalFetch(input, init);
+};
+
+/* -------------------------
+   3. 啟動 Ruffle 播放器
+------------------------- */
+launchBtn.addEventListener("click", () => {
+    const key = mainSelect.value;
+    
+    if (!key) {
+        alert("POWER ON FAILED: SELECT A FILE FIRST.");
+        return;
+    }
+
+    console.log(`[SYSTEM] Launching: ${key}`);
+
+    // 啟動時自動向上收合控制面板，釋放最大螢幕空間
+    headerEl.classList.add('collapsed');
+    toggleBtn.textContent = '▲';
+
+    // 清空螢幕
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
+
+    // 建立並載入播放器
+    const ruffle = window.RufflePlayer.newest();
+    player = ruffle.createPlayer();
+    container.appendChild(player);
+
+    player.load({
+        url: key,
+    }).then(() => {
+        console.log("[SYSTEM] Load successful.");
+    }).catch((err) => {
+        console.error("[SYSTEM] Load failed.", err);
+        container.innerHTML = `<div class="placeholder-text nes-text is-error">LOAD ERROR<br>SEE CONSOLE</div>`;
+    });
+});
 </script>
 
 </body>
