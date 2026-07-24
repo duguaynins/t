@@ -1,162 +1,151 @@
 <!DOCTYPE html>
 <html lang="auto">
 <head>
-    <meta charset="UTF-8">
-    <!-- 關鍵：防止手機瀏覽器自動縮放，強制 1:1 像素呈現 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="© 2024 NINS (by JPGT). By using any of the services, it means you have agreed to any content and all content!">
-    <title>nins/CODO</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>o</title>
 
-  
+<style>
+html, body{
+    margin:0;
+    width:100%;
+    height:100%;
+    background:#fff;
+    overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
 
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#FFFFFF">
-    <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js');
-    }
-	</script>
+body{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
 
+#output{
+    width:90%;
+    max-width:900px;
+    padding:20px;
+    box-sizing:border-box;
 
-	
-    <style>
-        /* 清除手機瀏覽器預設的邊距，並鎖定視口 */
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* 防止外層網頁出現橡皮筋回彈或雙滾動條 */
-            background-color: #000; /* 載入前的背景色，可依你的 App 風格調整 */
-        }
-        
-        iframe {
-            display: block; /* 消除內聯元素的底部微小間隙 */
-            width: 100vw;   /* 撐滿手機寬度 */
-            height: 100dvh; /* 撐滿手機動態高度（會自動扣除 Safari/Chrome 的網址列與工具列） */
-            border: none;   /* 不要邊框 */
-        }
-    </style>
+    text-align:center;
+    white-space:pre-wrap;
+    word-break:break-word;
+
+    font-size:24px;
+    line-height:1.6;
+}
+</style>
 </head>
 <body>
 
-    <!-- 
-      title: 提高無障礙體驗
-      sandbox: 安全防護，只允許執行指令碼與表單（若 App 需要下載檔案，可再加上 allow-downloads）
-    -->
-<iframe
-    id="codo"
-	title="nins/CODO"
-    src="about:blank"
-	frameborder="0"
-	style=""
-></iframe>
-
-
+<div id="output">Loading...</div>
 
 <script>
-
-// 顯示輸出
-function print(text) {
-    ///document.getElementById("output").textContent += text + "\n";
-    console.log(text);
-}
 const COAGENT = "https://duguaynins-coagent.hf.space";
 
-// 🔐 請填入你的帳密
+// 帳密
 const USERNAME = "duguaynins";
 const PASSWORD = "duguaynins";
 
 let sessionId = null;
 
-// 建立 Basic Auth header
-function getAuthHeader() {
-const token = btoa(`${USERNAME}:${PASSWORD}`);
+function getAuthHeader(){
     return {
-        "Content-Type": "application/json",
-        "Authorization": `Basic ${token}`
+        "Content-Type":"application/json",
+        "Authorization":"Basic " + btoa(`${USERNAME}:${PASSWORD}`)
     };
 }
 
+async function startSession(){
 
-// 建立 Session
-async function startSession() {
-    try {
-    const resp = await fetch(`${COAGENT}/session`, {
-        method: "POST",
-        headers: getAuthHeader(),
-        body: JSON.stringify({})
-    });
+    try{
 
-    if (!resp.ok) {
-        print("❌ Session：" + resp.status);
-        print(await resp.text());
-        return;
-    }
-
-    const data = await resp.json();
-    sessionId = data.id;
-    document.getElementById('codo').src = `${COAGENT}/Lw/session/${sessionId}`;
-    ///document.getElementById("codo").contentWindow.location.reload();
-    sendMessage();
-
-    print("✅ Session：" + sessionId);
-
-    } catch (err) {
-    print("❌ Error：" + err.message);
-    }
-}
-startSession();
-
-
-
-  // 傳送訊息
-async function sendMessage() {
-    if (!sessionId) {
-    print("⚠️ 請先建立 Session");
-    return;
-    }
-
-    const lang = navigator.language;
-    const langs = navigator.languages;
-    const payload = {
-    parts: [
-        {
-        type: "text",
-        text: `My language code is ${lang}. Please respond in ${lang}.`///"你好，請介紹台灣。"///"tell me in"
-        }
-    ]
-    };
-
-    try {
-        const resp = await fetch(`${COAGENT}/session/${sessionId}/message`, {
-            method: "POST",
-            headers: getAuthHeader(),
-            body: JSON.stringify(payload)
+        const resp = await fetch(`${COAGENT}/session`,{
+            method:"POST",
+            headers:getAuthHeader(),
+            body:"{}"
         });
 
-        if (!resp.ok) {
-            print("❌ 發送失敗：" + resp.status);
-            print(await resp.text());
+        if(!resp.ok){
+            document.getElementById("output").textContent =
+                "Session Error : " + resp.status;
             return;
+        }
+
+        const data = await resp.json();
+
+        sessionId = data.id;
+
+        sendMessage();
+
+    }catch(err){
+
+        document.getElementById("output").textContent =
+            err.message;
+
+    }
+
+}
+
+async function sendMessage(){
+
+    const lang = navigator.language;
+
+    const payload = {
+        parts:[
+            {
+                type:"text",
+                text:`My language code is ${lang}. Please respond in ${lang}.`
+            }
+        ]
+    };
+
+    try{
+
+        const resp = await fetch(
+            `${COAGENT}/session/${sessionId}/message`,
+            {
+                method:"POST",
+                headers:getAuthHeader(),
+                body:JSON.stringify(payload)
+            }
+        );
+
+        if(!resp.ok){
+
+            document.getElementById("output").textContent =
+                "Message Error : " + resp.status;
+
+            return;
+
         }
 
         const result = await resp.json();
 
-        ///let outputText = "";
-        for (const part of result.parts || []) {
-            if (part.type === "text") {
-            ///outputText += part.text + "\n";
+        let text = "";
+
+        for(const part of result.parts || []){
+
+            if(part.type==="text"){
+
+                text += part.text;
+
             }
+
         }
 
-        ///print("🤖 AI 回覆：\n" + outputText);
+        document.getElementById("output").textContent = text;
 
-    } catch (err) {
-        print("❌ Error：" + err.message);
+    }catch(err){
+
+        document.getElementById("output").textContent =
+            err.message;
+
     }
+
 }
-///sendMessage();
+
+startSession();
 </script>
 
 </body>
