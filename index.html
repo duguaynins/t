@@ -1,426 +1,163 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="auto">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>nins/Math</title>
-    <!-- 引入像素風格字型 Press Start 2P -->
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- 關鍵：防止手機瀏覽器自動縮放，強制 1:1 像素呈現 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="© 2024 NINS (by JPGT). By using any of the services, it means you have agreed to any content and all content!">
+    <title>nins/CODO</title>
+
+  
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FFFFFF">
+    <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+	</script>
+
+
+	
     <style>
-        * {
-            box-sizing: border-box;
+        /* 清除手機瀏覽器預設的邊距，並鎖定視口 */
+        html, body {
             margin: 0;
             padding: 0;
-            font-family: 'Press Start 2P', "Courier New", monospace, system-ui;
-            image-rendering: pixelated;
-        }
-
-        body {
-            background-color: #000000;
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 15px;
-        }
-
-        /* 經典 NES 8-bit 外框效果 */
-        .nes-border {
-            border: 4px solid #ffffff;
-            box-shadow: 
-                -4px 0 0 0 #000,
-                4px 0 0 0 #000,
-                0 -4px 0 0 #000,
-                0 4px 0 0 #000,
-                -8px 0 0 0 #ffffff,
-                8px 0 0 0 #ffffff,
-                0 -8px 0 0 #ffffff,
-                0 8px 0 0 #ffffff;
-            margin: 8px;
-        }
-
-        .container {
-            background-color: #212529;
-            padding: 24px 16px;
             width: 100%;
-            max-width: 950px;
-            margin-top: 10px;
+            height: 100%;
+            overflow: hidden; /* 防止外層網頁出現橡皮筋回彈或雙滾動條 */
+            background-color: #000; /* 載入前的背景色，可依你的 App 風格調整 */
         }
-
-        /* 固定在頂部的 Header 與輸入區群組 */
-        .top-section {
-            position: sticky;
-            top: 0;
-            background-color: #212529;
-            z-index: 10;
-            padding-bottom: 15px;
-            border-bottom: 4px dashed #555555;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            color: #f8b800; /* NES 黃 */
-            text-align: center;
-            font-size: 18px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-            text-shadow: 3px 3px #000000;
-        }
-
-        .input-group {
-            max-width: 500px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        label {
-            display: block;
-            font-size: 10px;
-            color: #fc9838;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
-        }
-
-        input[type="number"] {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            background-color: #000000;
-            color: #00e5ff;
-            border: 4px solid #ffffff;
-            outline: none;
-            text-align: center;
-        }
-
-        input[type="number"]:focus {
-            border-color: #f8b800;
-            box-shadow: 0 0 10px #f8b800;
-        }
-
-        .result-box {
-            background-color: #000000;
-            padding: 16px;
-            display: none;
-            margin-top: 10px;
-            border: 4px solid #00e5ff;
-        }
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        @media (max-width: 650px) {
-            .summary-grid {
-                grid-template-columns: 1fr;
-            }
-            h1 {
-                font-size: 14px;
-            }
-        }
-
-        .summary-card {
-            background-color: #212529;
-            padding: 12px;
-            border: 2px solid #555;
-            font-size: 10px;
-            line-height: 1.6;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .summary-card span.label-text {
-            color: #f83800; /* NES 瑪利歐紅 */
-        }
-
-        .summary-card span.val {
-            color: #00e5ff;
-            font-size: 12px;
-            word-break: break-all;
-        }
-
-        /* 垂直三列網格佈局 */
-        .columns-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        @media (max-width: 768px) {
-            .columns-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .col-card {
-            background-color: #212529;
-            border: 2px solid #ffffff;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .col-title {
-            font-size: 10px;
-            color: #f8b800;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #f8b800;
-            text-align: center;
-            line-height: 1.4;
-        }
-
-        /* 雙欄對應排版 */
-        .factor-columns-container {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-
-        /* 自訂像素風格捲動條 */
-        .factor-columns-container::-webkit-scrollbar {
-            width: 8px;
-        }
-        .factor-columns-container::-webkit-scrollbar-track {
-            background: #000;
-        }
-        .factor-columns-container::-webkit-scrollbar-thumb {
-            background: #f8b800;
-        }
-
-        .factor-subcol {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .factor-item {
-            background-color: #000000;
-            color: #ffffff;
-            border: 2px solid #ffffff;
-            padding: 6px;
-            font-size: 12px;
-            text-align: center;
-        }
-
-        /* 質數高亮 (NES 經典螢光綠風格) */
-        .factor-item.prime {
-            background-color: #000000;
-            color: #00f000;
-            border-color: #00f000;
-            box-shadow: inset 0 0 5px #00f000;
-        }
-
-        .step-list, .pair-list {
-            font-size: 10px;
-            color: #bcbcbc;
-            line-height: 2;
-        }
-
-        .step-list b {
-            color: #f83800;
-        }
-
-        /* 復古閃爍效果 */
-        .blink {
-            animation: blinker 1s linear infinite;
-        }
-
-        @keyframes blinker {
-            50% { opacity: 0; }
+        
+        iframe {
+            display: block; /* 消除內聯元素的底部微小間隙 */
+            width: 100vw;   /* 撐滿手機寬度 */
+            height: 100dvh; /* 撐滿手機動態高度（會自動扣除 Safari/Chrome 的網址列與工具列） */
+            border: none;   /* 不要邊框 */
         }
     </style>
 </head>
 <body>
 
-    <div class="container nes-border">
-        <!-- 固定在頂部的 Header 與輸入區 -->
-        <div class="top-section">
-            <h1><span class="blink">★</span> FACTOR FINDER <span class="blink">★</span><br>因數與短除法計算器</h1>
-            <div class="input-group">
-                <label for="numInput">> INPUT NUMBER & PRESS ENTER <</label>
-                <input type="number" id="numInput" placeholder="12" min="1" oninput="calculateFactors()">
-            </div>
-        </div>
+    <!-- 
+      title: 提高無障礙體驗
+      sandbox: 安全防護，只允許執行指令碼與表單（若 App 需要下載檔案，可再加上 allow-downloads）
+    -->
+<iframe
+    id="codo"
+	title="nins/CODO"
+    src="about:blank"
+	frameborder="0"
+	style=""
+></iframe>
 
-        <div id="resultBox" class="result-box">
-            <!-- 上方摘要資訊 -->
-            <div class="summary-grid">
-                <div class="summary-card">
-                    <span class="label-text">[ TYPE ] 數字屬性</span>
-                    <span id="typeVal" class="val">-</span>
-                </div>
-                <div class="summary-card">
-                    <span class="label-text">[ COUNT ] 因數總數</span>
-                    <span id="countVal" class="val">0</span>
-                </div>
-                <div class="summary-card">
-                    <span class="label-text">[ FORMULA ] 標準分解式</span>
-                    <span id="primeFormVal" class="val">-</span>
-                </div>
-                <div class="summary-card">
-                    <span class="label-text">[ VERIFY ] 公式驗算</span>
-                    <span id="formulaVal" class="val">-</span>
-                </div>
-            </div>
 
-            <!-- 下方垂直三列排版 -->
-            <div class="columns-grid">
-                <!-- 第一列：所有因數 -->
-                <div class="col-card">
-                    <div class="col-title">ALL FACTORS<br>(雙欄對應)</div>
-                    <div class="factor-columns-container">
-                        <div id="leftCol" class="factor-subcol"></div>
-                        <div id="rightCol" class="factor-subcol"></div>
-                    </div>
-                </div>
 
-                <!-- 第二列：短除法過程 -->
-                <div class="col-card">
-                    <div class="col-title">DIVISION<br>(短除法過程)</div>
-                    <div id="stepList" class="step-list"></div>
-                </div>
+<script>
 
-                <!-- 第三列：乘積配對 -->
-                <div class="col-card">
-                    <div class="col-title">PAIRS<br>(乘積配對)</div>
-                    <div id="pairList" class="pair-list"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+// 顯示輸出
+function print(text) {
+    ///document.getElementById("output").textContent += text + "\n";
+    console.log(text);
+}
+const COAGENT = "https://duguaynins-coagent.hf.space";
 
-    <script>
-        function isPrime(n) {
-            if (n < 2) return false;
-            for (let i = 2; i <= Math.sqrt(n); i++) {
-                if (n % i === 0) return false;
-            }
-            return true;
+// 🔐 請填入你的帳密
+const USERNAME = "duguaynins";
+const PASSWORD = "duguaynins";
+
+let sessionId = null;
+
+// 建立 Basic Auth header
+function getAuthHeader() {
+const token = btoa(`${USERNAME}:${PASSWORD}`);
+    return {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${token}`
+    };
+}
+
+
+// 建立 Session
+async function startSession() {
+    try {
+    const resp = await fetch(`${COAGENT}/session`, {
+        method: "POST",
+        headers: getAuthHeader(),
+        body: JSON.stringify({})
+    });
+
+    if (!resp.ok) {
+        print("❌ Session：" + resp.status);
+        print(await resp.text());
+        return;
+    }
+
+    const data = await resp.json();
+    sessionId = data.id;
+    document.getElementById('codo').src = `${COAGENT}/Lw/session/${sessionId}`;
+    ///document.getElementById("codo").contentWindow.location.reload();
+    sendMessage();
+
+    print("✅ Session：" + sessionId);
+
+    } catch (err) {
+    print("❌ Error：" + err.message);
+    }
+}
+startSession();
+
+
+
+  // 傳送訊息
+async function sendMessage() {
+    if (!sessionId) {
+    print("⚠️ 請先建立 Session");
+    return;
+    }
+
+    const lang = navigator.language;
+    const langs = navigator.languages;
+    const payload = {
+    parts: [
+        {
+        type: "text",
+        text: `My language code is ${lang}. Please respond in ${lang}.`///"你好，請介紹台灣。"///"tell me in"
+        }
+    ]
+    };
+
+    try {
+        const resp = await fetch(`${COAGENT}/session/${sessionId}/message`, {
+            method: "POST",
+            headers: getAuthHeader(),
+            body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+            print("❌ 發送失敗：" + resp.status);
+            print(await resp.text());
+            return;
         }
 
-        function calculateFactors() {
-            const input = document.getElementById('numInput');
-            const resultBox = document.getElementById('resultBox');
-            const typeVal = document.getElementById('typeVal');
-            const countVal = document.getElementById('countVal');
-            const primeFormVal = document.getElementById('primeFormVal');
-            const formulaVal = document.getElementById('formulaVal');
-            const leftCol = document.getElementById('leftCol');
-            const rightCol = document.getElementById('rightCol');
-            const stepList = document.getElementById('stepList');
-            const pairList = document.getElementById('pairList');
+        const result = await resp.json();
 
-            const num = parseInt(input.value);
-
-            if (isNaN(num) || num < 1) {
-                resultBox.style.display = 'none';
-                return;
+        ///let outputText = "";
+        for (const part of result.parts || []) {
+            if (part.type === "text") {
+            ///outputText += part.text + "\n";
             }
-
-            const smallFactors = [];
-            const largeFactors = [];
-            const pairs = [];
-
-            for (let i = 1; i <= Math.sqrt(num); i++) {
-                if (num % i === 0) {
-                    smallFactors.push(i);
-                    let partner = num / i;
-                    if (partner !== i) {
-                        largeFactors.unshift(partner);
-                        pairs.push(`${i} x ${partner} = ${num}`);
-                    } else {
-                        pairs.push(`${i} x ${i} = ${num}`);
-                    }
-                }
-            }
-
-            const totalCount = smallFactors.length + largeFactors.length;
-
-            const steps = [];
-            let tempNum = num;
-            let divisor = 2;
-            const primeCounts = {};
-            
-            if (num > 1) {
-                while (divisor * divisor <= tempNum) {
-                    if (tempNum % divisor === 0) {
-                        steps.push(` <b>${divisor}</b> | <u> ${tempNum} </u>`);
-                        primeCounts[divisor] = (primeCounts[divisor] || 0) + 1;
-                        tempNum = tempNum / divisor;
-                    } else {
-                        divisor++;
-                    }
-                }
-                if (tempNum > 1) {
-                    primeCounts[tempNum] = (primeCounts[tempNum] || 0) + 1;
-                }
-                steps.push(` <b>1</b> | <b>${tempNum}</b>`);
-            } else {
-                steps.push(`數字 1 為特殊數`);
-            }
-
-            let primeFormStr = "";
-            let formulaStr = "";
-            if (num === 1) {
-                primeFormStr = "1";
-                formulaStr = "1";
-            } else {
-                const baseStrs = [];
-                const formulaParts = [];
-                let calcProduct = 1;
-
-                for (const p in primeCounts) {
-                    const exp = primeCounts[p];
-                    baseStrs.push(`${p}^${exp}`);
-                    formulaParts.push(`(${exp}+1)`);
-                    calcProduct *= (exp + 1);
-                }
-                primeFormStr = baseStrs.join(' x ');
-                formulaStr = `${formulaParts.join('x')} = ${calcProduct}`;
-            }
-
-            if (num === 1) {
-                typeVal.textContent = '非質非合 (SPECIAL)';
-            } else if (totalCount === 2) {
-                typeVal.textContent = '質數 (PRIME)';
-            } else {
-                typeVal.textContent = '合數 (COMPOSITE)';
-            }
-
-            countVal.textContent = `${totalCount} 個`;
-            primeFormVal.innerHTML = primeFormStr;
-            formulaVal.textContent = formulaStr;
-            
-            leftCol.innerHTML = '';
-            smallFactors.forEach(f => {
-                const item = document.createElement('div');
-                item.className = 'factor-item' + (isPrime(f) ? ' prime' : '');
-                item.textContent = f;
-                leftCol.appendChild(item);
-            });
-
-            rightCol.innerHTML = '';
-            largeFactors.forEach(f => {
-                const item = document.createElement('div');
-                item.className = 'factor-item' + (isPrime(f) ? ' prime' : '');
-                item.textContent = f;
-                rightCol.appendChild(item);
-            });
-
-            stepList.innerHTML = steps.join('<br>');
-            pairList.innerHTML = pairs.join('<br>');
-
-            resultBox.style.display = 'block';
         }
-    </script>
+
+        ///print("🤖 AI 回覆：\n" + outputText);
+
+    } catch (err) {
+        print("❌ Error：" + err.message);
+    }
+}
+///sendMessage();
+</script>
+
 </body>
 </html>
